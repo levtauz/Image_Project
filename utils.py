@@ -2,6 +2,8 @@ import numpy as np
 import scipy as scp
 import math
 from quant_tables import *
+from scipy.fftpack import idct
+from skimage.color import rgb2lab, lab2rgb   
 
 def zeropad_image(V):
     def roundup(x):
