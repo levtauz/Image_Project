@@ -3,7 +3,7 @@ import scipy as scp
 import math
 from quant_tables import *
 from scipy.fftpack import idct
-from skimage.color import rgb2lab, lab2rgb   
+from skimage.color import rgb2lab, lab2rgb
 
 def zeropad_image(V):
     def roundup(x):
@@ -36,11 +36,11 @@ def quantize(DCT_coeffs, q):
         else:
             return 2-q*1.0/50
     alpha = a(q)
-    
+
     DCT_coeffs[:,:,:,0] = np.round(DCT_coeffs[:,:,:,0]*1.0/(alpha*luminance_table))
     DCT_coeffs[:,:,:,1] = np.round(DCT_coeffs[:,:,:,1]*1.0/(alpha*chrominance_table))
     DCT_coeffs[:,:,:,2] = np.round(DCT_coeffs[:,:,:,2]*1.0/(alpha*chrominance_table))
-    
+
     return DCT_coeffs
 
 def JPEG_compression(image, quality = 50):
@@ -50,10 +50,10 @@ def JPEG_compression(image, quality = 50):
     -Preprocessing
     -DCT
     -Quantinization
-    
+
     Input:
-    quality- determines the amount of lossy compression 
-    
+    quality- determines the amount of lossy compression
+
     Output:
     Numpy array of 8x8 blocks for each channel
     [number of blocks, 8,8,3]
@@ -67,3 +67,11 @@ def JPEG_compression(image, quality = 50):
     #Quantize
     im_q = quantize(im_dct,quality)
     return im_q
+
+def psnr(original, transmitted):
+    max_pixel = np.max(original) * 1.0
+    mse = (np.sum(np.square(np.asarray(original, dtype=np.float) - np.asarray(transmitted, dtype=np.float)))) / (original.size * 1.0)
+    if mse == 0:
+        return float('inf')
+    psnr_value = 20 * np.log10(float(max_pixel)) - 10 * np.log10(mse)
+    return psnr_value
