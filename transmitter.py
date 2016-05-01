@@ -35,9 +35,6 @@ class Transmitter():
         p.terminate()
 
 
-
-
-
 def main():
       pass
 
