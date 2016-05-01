@@ -8,8 +8,9 @@ import ax25
 import pdb
 
 class Receiver():
-    def __init__(self, user, serial_number, gain=0.5):
-        self.tnc = aprs.TNCaprs()
+    def __init__(self, user, serial_number, fs=48000.0, gain=0.5):
+        self.tnc = aprs.TNCaprs(fs)
+        pdb.set_trace()
         self.s = utils.setup_serial(serial_number)
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_number(user)
         self.gain = gain
