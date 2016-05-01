@@ -2,6 +2,10 @@
 import aprs
 import JPEG
 import ax25
+import utils
+
+import transmitter
+import receiver
 
 from scipy import misc
 import matplotlib.pyplot as plt
@@ -13,64 +17,14 @@ import numpy as np
 import serial
 import bitarray
 
-from numpy import pi
-from numpy import sin
-from numpy import cos
-from numpy import zeros
-from numpy import r_
-from scipy import signal
-from scipy import integrate
-
-from numpy import ones
-from numpy import floor
-from numpy import round
-from numpy import zeros
-from numpy import sin
-from numpy import log
-from numpy import exp
-from numpy import sign
-from numpy import nonzero
-from numpy import angle
-from numpy import conj
-from numpy import concatenate
-
-from numpy import mean
-from numpy import power
-from numpy.fft import fft
-from numpy.fft import fftshift
-from numpy.fft import ifft
-from numpy.fft import ifftshift
-from  scipy.io.wavfile import read as wavread
-from numpy import tile
-
 # debugging
 import pdb
 
-def setup_device_numbers():
-    p = pyaudio.PyAudio()
-    N = p.get_device_count()
-    for n in range(0,N):
-        name = p.get_device_info_by_index(n).get('name')
-        print n, name
-    #printDevNumbers(p)
-    p.terminate()
+# command line parsing
+import argparse
 
-    dusb_in = 1
-    dusb_out = 5
-    din = 2
-    dout = 4
-    return (dusb_in, dusb_out, din, dout)
-    
-def setup_serial(com_num=5):
-    if sys.platform == 'darwin':  # Mac
-        s = serial.Serial(port='/dev/tty.SLAB_USBtoUART')
-    else: # for windows
-        s = serial.Serial(port='COM{}'.format(com_num))
-
-#    s.setDTR(1)
-    #time.sleep(1)
-    s.setDTR(0)
-    return s
+# Global variables
+VIEW=False # toggle comparing old and new images
 
 def test_sms():
     callsign = "KM6BHD"
@@ -78,16 +32,16 @@ def test_sms():
     dest = "APCAL"
 
     # Uncomment to Send Email
-    #info = ":EMAIL    :h.wang94@berkeley.edu Hi, its YOURNAME, what a great lab!"
+    #info = ":EMAIL    :h.wang94@berkeley.edu Hi, test email!"
 
-    # Uncomment to Send an SMS message to a phone number (update the number!)
-    info = ":SMSGTE   :@4089312267 This is a new message! 2"
+    # Uncomment to Send an SMS message to a phone number
+    info = ":SMSGTE   :@NUMBER Hi. This is a test message text"
+
     #uncomment to show yourself on mt everest
     #info = "=2759.16N/08655.30E[I'm on the top of the world"
 
     #uncomment to send to everyone on the APRS system near you
     #info = ":ALL      : CQCQCQ I would like to talk to you!"
-
 
     #uncomment to report position
     #info = "=3752.50N/12215.43WlIm using a laptop in Cory Hall!"
@@ -95,48 +49,60 @@ def test_sms():
     #uncomment to send a status message
     #info = ">I like radios"
 
-
     packet = ax25.UI(
             destination=dest,
-            source=callsign, 
+            source=callsign,
             info=info,
             digipeaters=Digi.split(b','),
             )
     #print(packet.unparse())
     return packet
 
+def init_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--user", default=str) # for user setup configuration
+    parser.add_argument("-f", default="images/createrLake.tiff") # image file
+    parser.add_argument("-q", default=90, type=int) # image quality
+    parser.add_argument("-s", default=-1, type=int) # serial number. default is -1 for MAC or COM4. can change if needed
+    args = parser.parse_args()
+    return args
 
 def main():
-    #image = misc.imread('images/createrLake.tiff')
-    #quality = 90
-    #data = JPEG.JPEG_compression(image, quality)
+    args = init_args()
 
-    dusb_in, dusb_out, din, dout = setup_device_numbers()
-    com_num = 5
-    s = setup_serial(com_num)
+    # unpack variables from args. allow flexible changes without using args
+    user = args.user
+    serial_number = args.s
 
-    tnc = aprs.TNCaprs() # inititiate a terminal-node-controller
+    file_path = args.f
+    jpeg_quality = args.q
 
-    packet = test_sms()
-    prefix = bitarray.bitarray(tile([0,1,1,1,1,1,1,0],(20,)).tolist())
-    msg = tnc.modulate(tnc.NRZ2NRZI( prefix + packet.unparse() + prefix))
-    p = pyaudio.PyAudio()
+    # read in image
+    image = misc.imread(file_path)
+    # compress image and prepare for transmission
+    data = JPEG.JPEG_compression(image, jpeg_quality)
 
-    Qout = Queue.Queue()
-    ctrlQ = Queue.Queue()
+    # Initiate a transmitter
+    #t = transmitter.Transmitter(user, serial_number)
 
-    Qout.put("KEYON")
-    Qout.put(msg*0.5)  # pick the gain that you calibrated in lab 5 part I
-    Qout.put("KEYOFF")
-    Qout.put("EOT")
+    # prepare data -> packets?
+    #packet = test_sms()
 
-    aprs.play_audio( Qout ,ctrlQ ,p, 48000 , dusb_out, s, keydelay=0.5)
-
-    time.sleep(1)
-    p.terminate()
+    # transmit packets
+    #t.transmit_packet(packet)
 
 
-    #im = JPEG.JPEG_decompression(data, quality, image.shape[0], image.shape[1])
+    #r = receiver.Receiver(user, serial_number)
+
+    im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
+    if VIEW:
+        plt.figure()
+        plt.subplot(1,2,1)
+        plt.imshow(image)
+        plt.subplot(1,2,2)
+        plt.imshow(im)
+        plt.show()
 
 
-main()
+if __name__ == "__main__":
+    main()

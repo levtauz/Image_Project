@@ -2,10 +2,10 @@ import numpy as np
 import scipy as scp
 import math
 from quant_tables import *
-from scipy.fftpack import idct
+from scipy.fftpack import idct, dct
 from skimage.color import rgb2lab, lab2rgb
 
-#Compression 
+#Compression
 def zeropad_image(V):
     def roundup(x):
         return int(math.ceil(x * 1.0 / 8)) * 8
@@ -22,7 +22,7 @@ def block_image(V):
     return np.array(l)
 
 def dct_2d(X):
-    return dct(dct(X, axis=1), axis=2)
+    return dct(dct(X, axis=1, norm="ortho"), axis=2, norm="ortho")
 
 def dct_all(X):
     blocks = block_image(X)
@@ -75,7 +75,7 @@ def zigzag_blocks(img):
             vector[3*counter:3*counter+3] = img[j, y, x, :]
             counter += 1
     return vector
-    
+
 def zigzag_full(img):
     """
     assumes image is NxNx3 where N mod 8 == 0
@@ -123,10 +123,10 @@ def JPEG_compression(image, quality = 50):
     -Preprocessing
     -DCT
     -Quantinization
-    
+
     Input:
-    quality- determines the amount of lossy compression 
-    
+    quality- determines the amount of lossy compression
+
     Output:
     Numpy array of 8x8 blocks for each channel
     [number of blocks, 8,8,3]
@@ -145,7 +145,6 @@ def JPEG_compression(image, quality = 50):
 
 #Decompression
 
-
 def idct_2d(X):
     return idct(idct(X, axis=1,norm="ortho"), axis=2,norm="ortho")
 
@@ -160,7 +159,7 @@ def unblock_image(X,height, width):
             result[i:i+8,j:j+8,:] = X[n]
             n += 1
     return result
-    
+
 def unquantize(X,q):
     X = X.copy()
     def a(q):
@@ -170,11 +169,11 @@ def unquantize(X,q):
         else:
             return 2-q*1.0/50
     alpha = a(q)
-    
+
     X[:,:,:,0] = np.round(X[:,:,:,0]*(alpha*luminance_table))
     X[:,:,:,1] = np.round(X[:,:,:,1]*(alpha*chrominance_table))
     X[:,:,:,2] = np.round(X[:,:,:,2]*(alpha*chrominance_table))
-    
+
     return X
 
 def JPEG_decompression(data, quality, height, width, channels=3):
@@ -184,7 +183,7 @@ def JPEG_decompression(data, quality, height, width, channels=3):
     im_idct = idct_2d(im_q)
     #Unblock
     im = unblock_image(im_idct,height,width)
-    
+
     #Undo offset and return to RGB
     im[:,:,[1,2]] -= 128
     im = lab2rgb(im) * 255
