@@ -6,6 +6,9 @@ import numpy as np
 import pyaudio
 import serial
 import sys
+import time
+
+import pdb
 
 def psnr(im_truth, im_test, maxval=255.):
     """
@@ -95,7 +98,6 @@ def setup_serial(com_num):
             s = serial.Serial(port='COM4')
     else:
         s = serial.Serial(port='COM{}'.format(com_num))
-
     s.setDTR(0)
     return s
 
