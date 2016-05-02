@@ -79,9 +79,9 @@ def get_dev_numbers(person, output=False):
         din = 2
         dout = 4
     elif person == "l": # personal setup for lev. CHANGE
-        dusb_in = 1
-        dusb_out = 5
-        din = 2
+        dusb_in = 3
+        dusb_out = 3
+        din = 7
         dout = 4
     elif person == "s": # personal setup for shane. CHANGE
         dusb_in = 1
@@ -94,14 +94,17 @@ def setup_serial(com_num):
     if com_num == -1:
         if sys.platform == 'darwin':  # Mac
             s = serial.Serial(port='/dev/tty.SLAB_USBtoUART')
+        elif sys.platform == 'linux2':
+            s = serial.Serial(port='/dev/ttyUSB0')
         else: # for windows
             s = serial.Serial(port='COM4')
     else:
-        s = serial.Serial(port='COM{}'.format(com_num))
+        if sys.platform == 'linux2':
+            s = serial.Serial(port='/dev/ttyUSB{0}').format(com_num))
+        else:
+            s = serial.Serial(port='COM{}'.format(com_num))
     s.setDTR(0)
     return s
-
-
 
 ############################
 # helpful debugging tools
