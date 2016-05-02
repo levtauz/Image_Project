@@ -41,6 +41,7 @@ import bitarray
 from numpy import int32
 from fractions import gcd
 
+import mfsk
 
 
 
@@ -147,7 +148,7 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
 
 class TNCaprs:
 
-    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43):
+    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=2400):
 
         #  Implementation of an afsk1200 TNC.
         #
@@ -164,14 +165,17 @@ class TNCaprs:
 
 
         ## compute sizes based on inputs
+        self.baud = baud
+        self.mark_f = 1200
+        self.space_f = 2400
         self.TBW = 2.0   # TBW for the demod filters
-        self.N = (int(fs/1200*self.TBW)//2)*2+1   # length of the filters for demod
+        self.N = (int(fs/baud*self.TBW)//2)*2+1   # length of the filters for demod
         self.fs = fs     # sampling rate
         self.BW = self.TBW/(1.0*self.N/fs)      # BW of filter based on TBW
         self.Abuffer = Abuffer             # size of audio buffer
         self.Nchunks = Nchunks             # number of audio buffers to collect
         self.Nbuffer = Abuffer*Nchunks+self.N*3-3         # length of the large buffer for processing
-        self.Ns = 1.0*fs/1200 # samples per symbol
+        self.Ns = 1.0*fs/baud # samples per symbol
 
         ## state variables for the modulator
         self.prev_ph = 0  # previous phase to maintain continuous phase when recalling the function
@@ -179,9 +183,10 @@ class TNCaprs:
         ##  Generate Filters for the demodulator
         self.h_lp = signal.firwin(self.N,self.BW/fs*1.0,window='hanning')
         self.h_lpp = signal.firwin(self.N,self.BW*2*1.2/fs,window='hanning')
-        self.h_space = self.h_lp*exp(1j*2*pi*(2200)*r_[-self.N/2:self.N/2]/fs)
-        self.h_mark = self.h_lp*exp(1j*2*pi*(1200)*r_[-self.N/2:self.N/2]/fs)
-        self.h_bp = signal.firwin(self.N,self.BW/fs*2.2,window='hanning')*exp(1j*2*pi*1700*r_[-self.N/2:self.N/2]/fs)
+        self.h_space = self.h_lp*exp(1j*2*pi*(self.space_f)*r_[-self.N/2:self.N/2]/fs)
+        self.h_mark = self.h_lp*exp(1j*2*pi*(self.mark_f)*r_[-self.N/2:self.N/2]/fs)
+        fc = (self.space_f + self.mark_f) / 2
+        self.h_bp = signal.firwin(self.N,self.BW/fs*2.2,window='hanning')*exp(1j*2*pi*fc*r_[-self.N/2:self.N/2]/fs)
 
 
         ## PLL state variables  -- so conntinuity between buffers is preserved
@@ -235,22 +240,27 @@ class TNCaprs:
     #         fs    - sampling rate
     # Outputs:
     #         sig    -  returns afsk1200 modulated signal
+        #mark_f = 1200
+        #space_f = 2400
+        #baud = 2400
+        fs_lcm = lcm((self.baud, self.fs))
 
-        fss = lcm((1200,self.fs))
-        deci = fss/self.fs
+        fc = (self.mark_f+self.space_f)/2
+        df = (self.mark_f-self.space_f)/2
 
-        Nb = fss/1200
-        nb = len(bits)
-        NRZ = ones((nb,Nb))
-        for n in range(0,nb):
-            if bits[n]:
-                NRZ[n,:]=-NRZ[n,:]
+        Ns = fs_lcm/self.baud
+        mark_f = np.empty(0)
 
-        freq = 1700 + 500*NRZ.ravel()
-        ph = self.prev_ph + 2.0*pi*integrate.cumtrapz(freq)/fss
-        sig = cos(ph[::deci])
+        N = Ns*len(bits)
+        mf_array = self.mark_f
+        for i in bits:
+            mf_array = np.r_[mf_array, np.repeat(1 if i else -1, Ns)]
 
-        return sig
+        t = np.linspace(0,len(bits)*1.0/self.baud,N)
+
+        phase = 2*pi*fc*t + 2*pi*df*integrate.cumtrapz(mf_array*(1.0/fs_lcm))
+        sig = np.cos(phase)
+        return sig[::fs_lcm/self.fs]
 
     def modulatPacket(self, callsign, digi, dest, info, preflags=80, postflags=80 ):
 
