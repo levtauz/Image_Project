@@ -62,7 +62,7 @@ def bit_unstuff(data):
             else:
                 count = 0
             ret_bits.append(bit)
-            
+
             if count == 5:
                 logger.debug("Unstuffing bit")
                 skip = True;
@@ -89,7 +89,7 @@ class FCS(object):
 #        print "%r" % "".join([chr((~self.fcs & 0xff) % 256), chr((~self.fcs >> 8) % 256)])
         # digest is two bytes, little endian
         return struct.pack("<H", ~self.fcs % 2**16)
-        
+
 def fcs(bits):
     '''
     Append running bitwise FCS CRC checksum to end of generator
@@ -118,16 +118,16 @@ def fcs_validate(bits):
             bit = buffer.pop(0)
             fcs.update(bit)
             yield bit
-    
+
     if buffer.tobytes() != fcs.digest():
         raise Exception("FCS checksum invalid.")
 
 class AX25(object):
     def __init__(
         self,
-        destination=b"APRS", 
-        source=b"", 
-        digipeaters=(b"RELAY", b"WIDE2-1"), 
+        destination=b"APRS",
+        source=b"",
+        digipeaters=(b"RELAY", b"WIDE2-1"),
         info=b"\""
     ):
         self.flag = b"\x7e"
@@ -137,7 +137,7 @@ class AX25(object):
         self.digipeaters = digipeaters
 
         self.info = info
-    
+
     @classmethod
     def callsign_encode(self, callsign):
         callsign = callsign.upper()
