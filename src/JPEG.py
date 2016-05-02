@@ -4,6 +4,8 @@ import math
 from quant_tables import *
 from scipy.fftpack import idct, dct
 from skimage.color import rgb2lab, lab2rgb
+from bitarray import bitarray
+import pdb
 
 #Compression
 def zeropad_image(V):
@@ -189,4 +191,19 @@ def JPEG_decompression(data, quality, height, width, channels=3):
     im = lab2rgb(im) * 255
     return im[0:height,0:width].astype(np.uint8)
 
+def file_to_bitarray(file):
+    """
+    assume file is path to a file
+    """
+    ba = bitarray()
+    with open(file, 'rb') as f:
+        ba.fromfile(f)
+    return ba
 
+def data_to_bitarray(data):
+    """
+    assume data is a string
+    """
+    ba = bitarray()
+    ba.fromstring(data)
+    return ba
