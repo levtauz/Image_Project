@@ -34,7 +34,6 @@ class Transmitter():
         Qout.put(msg*self.gain)
         Qout.put("KEYOFF")
         Qout.put("EOT")
-        pdb.set_trace()
 
         aprs.play_audio( Qout ,ctrlQ ,p, 48000 , self.dusb_out, self.s, keydelay=0.5)
 

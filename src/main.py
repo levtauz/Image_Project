@@ -49,9 +49,7 @@ def main():
 
     test_number = args.test
     if test_number != -1:
-        pdb.set_trace()
         test.run_tests(user, serial_number)
-        pdb.set_trace()
     else:
         # read in image
         image = misc.imread(file_path)
