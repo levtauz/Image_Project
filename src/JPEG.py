@@ -1,11 +1,20 @@
 import numpy as np
 import scipy as scp
+from scipy import misc
 import math
 from quant_tables import *
 from scipy.fftpack import idct, dct
 from skimage.color import rgb2lab, lab2rgb
 from bitarray import bitarray
+import utils
+import gzip
+
+import sys
+import os
+
+#Debug
 import pdb
+import matplotlib.pyplot as plt
 
 #Compression
 def zeropad_image(V):
@@ -33,7 +42,7 @@ def dct_all(X):
 def quantize(DCT_coeffs, q):
     DCT_coeffs = DCT_coeffs.copy()
     def a(q):
-        assert q in range(1,101)
+        assert q in range(1,100),"quality not in [1,100), q = {0}".format(q)
         if q in range(1, 51):
             return 50.0/q
         else:
@@ -143,7 +152,7 @@ def JPEG_compression(image, quality = 50):
     im_q = quantize(im_dct,quality)
     #print im_q.shape
     im_vec = zigzag_blocks(im_q)
-    return im_vec
+    return im_vec.astype(np.int16)
 
 #Decompression
 
@@ -191,12 +200,12 @@ def JPEG_decompression(data, quality, height, width, channels=3):
     im = lab2rgb(im) * 255
     return im[0:height,0:width].astype(np.uint8)
 
-def file_to_bitarray(file):
+def file_to_bitarray(fname):
     """
     assume file is path to a file
     """
     ba = bitarray()
-    with open(file, 'rb') as f:
+    with open(fname, 'rb') as f:
         ba.fromfile(f)
     return ba
 
@@ -205,5 +214,38 @@ def data_to_bitarray(data):
     assume data is a string
     """
     ba = bitarray()
-    ba.fromstring(data)
+    ba.frombytes(data)
     return ba
+
+def bitarray_to_data(bits):
+    """
+    assume bits contain int16 data
+    """
+    return np.fromstring(bits,dtype = np.int16)
+
+def save_to_gzip(data,fname):
+    """
+    Saves data to a gzip file
+    fname: name of gzip file, do not at gz to the end
+    """
+    with gzip.open(fname  + '.gz', 'wb') as f:
+        f.write(data)
+
+def get_file_size(file):
+    """
+    Returns the file size in Bytes
+    """
+    return os.path.getsize(file)
+
+def main():
+    assert len(sys.argv) == 3, "Need the filename of image to compress and quality amount"
+    fname = sys.argv[1]
+    quality = int(sys.argv[2])
+    image = misc.imread(fname)
+    data = JPEG_compression(image,quality) 
+    save_to_gzip(data,fname)
+    print("Original File Size = {0} B".format(get_file_size(fname)))
+    print("New File Size = {0} B".format(get_file_size(fname + ".gz")))
+    
+if __name__ == "__main__":
+    main()
