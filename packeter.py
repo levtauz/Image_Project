@@ -7,14 +7,15 @@ Digi =b'WIDE1-1,WIDE2-1'
 dest = "APCAL"
 
 def bitarray_to_packets(bits, dest, callsign, Digi):
+    len_payload = 256*8
     N = len(bits)
-    n = N // 256
-    extra = N-n*256
+    n = N // (len_payload)
+    extra = N-n*len_payload
 
     packets = []
 
     for i in range(n):
-        x = bits[i*256:(i+1)*256]
+        x = bits[i*len_payload:(i+1)*len_payload]
         packet = ax25.UI(
             destination=dest,
             source=callsign,
@@ -24,8 +25,8 @@ def bitarray_to_packets(bits, dest, callsign, Digi):
         packets.append(packet)
 
     if extra != 0:
-        x = bits[n*256:]
-        x.extend([0]*(256-len(x))) #zero-append last extra packet
+        x = bits[n*len_payload:]
+        x.extend([0]*(len_payload-len(x))) #zero-append last extra packet
         packet = ax25.UI(
             destination=dest,
             source=callsign,
@@ -36,8 +37,13 @@ def bitarray_to_packets(bits, dest, callsign, Digi):
 
     return packets
 
-b = bitarray.bitarray([random.random() > .5 for _ in range(4100)])
+L = 256*8*3+256*4
+b = bitarray.bitarray([random.random() > .5 for _ in range(L)])
 packs = bitarray_to_packets(b, dest, callsign, Digi)
 
+print L
+print "no. of packets:", len(packs)
 for p in packs:
-    print p.unparse()
+    print len(p.unparse())
+    print "unstuffed length:", len(ax25.bit_unstuff(p.unparse()))
+

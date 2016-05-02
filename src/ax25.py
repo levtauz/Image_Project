@@ -1,24 +1,24 @@
 #Copyright (c) 2013 Christopher H. Casebeer. All rights reserved.
 #
-#Redistribution and use in source and binary forms, with or without 
+#Redistribution and use in source and binary forms, with or without
 #modification, are permitted provided that the following conditions are met:
 #
-#   1. Redistributions of source code must retain the above copyright notice, 
+#   1. Redistributions of source code must retain the above copyright notice,
 #      this list of conditions and the following disclaimer.
 #
-#   2. Redistributions in binary form must reproduce the above copyright notice, 
-#      this list of conditions and the following disclaimer in the documentation 
+#   2. Redistributions in binary form must reproduce the above copyright notice,
+#      this list of conditions and the following disclaimer in the documentation
 #      and/or other materials provided with the distribution.
 #
-#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
-#ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
-#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE 
-#DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE 
-#FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
-#DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR 
-#SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER 
-#CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, 
-#OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+#THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+#ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+#WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+#DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+#FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+#DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+#SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+#CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+#OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 #OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 #
@@ -177,7 +177,7 @@ class AX25(object):
         return address_bytes
 
     def header(self):
-        
+
         return b"{addresses}{control}{protocol}".format(
             addresses = self.encoded_addresses(),
             control = self.control_field, # * 8,
@@ -198,7 +198,7 @@ class AX25(object):
         bits.frombytes("".join([self.header(), self.info, self.fcs()]))
 
         return flag + bit_stuff(bits) + flag
-    
+
     def parse(self,bits):
         flag = bitarray(endian="little")
         flag.frombytes(self.flag)
@@ -207,15 +207,15 @@ class AX25(object):
         try:
         	flag_loc = bits.search(flag)
         	bits_noflag = bits[ flag_loc[0]+8:flag_loc[1] ]
-       
+
         	# Bit unstuff
         	bits_unstuff = bit_unstuff(bits_noflag)
-	
+
         # Chop to length
 		bits_bytes = bits_unstuff.tobytes()
 
         # Split bits
-        
+
  #       header = bits_unstuff[:240]
         	h_dest = bits_unstuff[:56]
 		h_src  = bits_unstuff[56:112]
@@ -227,9 +227,9 @@ class AX25(object):
 			self.source = "no decode"
 			self.info = "no decode"
 			self.digis = "no decode"
-			return 
+			return
 
-		
+
 		digilen = (n-14)*8/7
 		h_digi = bits_unstuff[112:112+(n-14)*8]
 		h_len = 112 + (n-14)*8 + 16
@@ -240,7 +240,7 @@ class AX25(object):
         # Decode addresses
         	destination = self.callsign_decode(h_dest)
         	source = self.callsign_decode(h_src)
-	
+
 		if digilen == 0:
 			digipeaters = ()
 		else:
@@ -251,20 +251,20 @@ class AX25(object):
  #       print "Digipeater1:\t", digipeaters[0][:-1], "-", digipeaters[0][-1]
         	print "Digipeaters:\t", digipeaters
         	print "Info:\t\t", info.tobytes()
-        
+
 		self.destination = destination
 		self.source = source
 		self.info = info.tobytes()
-		self.digis = digipeaters 
+		self.digis = digipeaters
 	except:
 		self.destination = "no decode"
 		self.source = "no decode"
 		self.info = "no decode"
 		self.digis = "no decode"
-		return 
+		return
 
 
-    
+
     def __repr__(self):
         return self.__str__()
     def __str__(self):
@@ -274,8 +274,8 @@ class AX25(object):
             digis = b",".join(self.digipeaters),
             info = self.info
         )
-    
-    
+
+
     def fcs(self):
         content = bitarray(endian="little")
         content.frombytes("".join([self.header(), self.info]))
@@ -290,21 +290,21 @@ class AX25(object):
 class UI(AX25):
     def __init__(
         self,
-        destination=b"APRS", 
-        source=b"", 
+        destination=b"APRS",
+        source=b"",
         digipeaters=(b"WIDE1-1", b"WIDE2-1"),
         info=b""
     ):
         AX25.__init__(
-            self, 
-            destination, 
-            source, 
+            self,
+            destination,
+            source,
             digipeaters,
             info
         )
         self.control_field = b"\x03"
         self.protocol_id = b"\xf0"
-            
+
 
 
 
