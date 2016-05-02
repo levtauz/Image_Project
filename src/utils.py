@@ -8,6 +8,11 @@ import serial
 import sys
 import time
 
+import gzip
+
+import sys
+import os
+
 import pdb
 
 def psnr(im_truth, im_test, maxval=255.):
@@ -100,7 +105,7 @@ def setup_serial(com_num):
             s = serial.Serial(port='COM4')
     else:
         if sys.platform == 'linux2':
-            s = serial.Serial(port='/dev/ttyUSB{0}').format(com_num))
+            s = serial.Serial(port='/dev/ttyUSB{0}'.format(com_num))
         else:
             s = serial.Serial(port='COM{}'.format(com_num))
     s.setDTR(0)
@@ -181,3 +186,47 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
         sg_plot(t_range, f_range, xmf,dbf = dbf)
 
     return t_range, f_range, xmf
+
+
+#####
+#GZIP
+#####
+
+def file_to_bitarray(fname):
+    """
+    assume file is path to a file
+    """
+    ba = bitarray()
+    with open(fname, 'rb') as f:
+        ba.fromfile(f)
+    return ba
+
+def data_to_bitarray(data):
+    """
+    assume data is a string
+    """
+    ba = bitarray()
+    ba.frombytes(data)
+    return ba
+
+def bitarray_to_data(bits):
+    """
+    assume bits contain int16 data
+    """
+    return np.fromstring(bits,dtype = np.int16)
+
+def save_to_gzip(data,fname):
+    """
+    Saves data to a gzip file
+    fname: name of gzip file, do not at gz to the end
+    """
+    with gzip.open(fname  + '.gz', 'wb',compresslevel = 9) as f:
+        f.write(data)
+
+def get_file_size(fname):
+    """
+    Returns the file size in Bytes
+    """
+    return os.path.getsize(fname)
+
+

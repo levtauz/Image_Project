@@ -200,52 +200,17 @@ def JPEG_decompression(data, quality, height, width, channels=3):
     im = lab2rgb(im) * 255
     return im[0:height,0:width].astype(np.uint8)
 
-def file_to_bitarray(fname):
-    """
-    assume file is path to a file
-    """
-    ba = bitarray()
-    with open(fname, 'rb') as f:
-        ba.fromfile(f)
-    return ba
-
-def data_to_bitarray(data):
-    """
-    assume data is a string
-    """
-    ba = bitarray()
-    ba.frombytes(data)
-    return ba
-
-def bitarray_to_data(bits):
-    """
-    assume bits contain int16 data
-    """
-    return np.fromstring(bits,dtype = np.int16)
-
-def save_to_gzip(data,fname):
-    """
-    Saves data to a gzip file
-    fname: name of gzip file, do not at gz to the end
-    """
-    with gzip.open(fname  + '.gz', 'wb') as f:
-        f.write(data)
-
-def get_file_size(file):
-    """
-    Returns the file size in Bytes
-    """
-    return os.path.getsize(file)
-
 def main():
     assert len(sys.argv) == 3, "Need the filename of image to compress and quality amount"
     fname = sys.argv[1]
     quality = int(sys.argv[2])
     image = misc.imread(fname)
     data = JPEG_compression(image,quality) 
-    save_to_gzip(data,fname)
-    print("Original File Size = {0} B".format(get_file_size(fname)))
-    print("New File Size = {0} B".format(get_file_size(fname + ".gz")))
-    
+    utils.save_to_gzip(data,fname)
+    print("Original File Size = {0} B".format(utils.get_file_size(fname)))
+    print("New File Size = {0} B".format(utils.get_file_size(fname + ".gz")))
+   
+    im = JPEG_decompression(data,quality,image.shape[0],image.shape[1])
+    print("PSNR = {0}".format(utils.psnr(image,im)))
 if __name__ == "__main__":
     main()
