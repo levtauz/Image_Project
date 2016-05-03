@@ -83,20 +83,45 @@ def receiver_main(user, serial_number, fname):
     cQin = Queue.Queue()
     Qin = Queue.Queue()
     p = pyaudio.PyAudio()
-    t_rec = threading.Thread(target=aprs.record_audio, args=(Qin, cQin, p, fs, t.dusb_in))
+
+    t = transmitter.Transmitter(user, serial_number)
+    
+    fs_usb = p.get_device_info_by_index(t.dusb_in)['defaultSampleRate']
+    print(fs_usb)
+    t_rec = threading.Thread(target=aprs.record_audio, args=(Qin, cQin, p, fs_usb, t.dusb_in, 1024))
     t_rec.start()
-    time.slep(2)
+    
+    #aprs.record_audio(Qin, cQin, p, fs, t.dusb_in)
+    cQout = Queue.Queue()
+    Qout = Queue.Queue()
+
+    t_play = threading.Thread(target = aprs.play_audio,   args = (Qout,cQout,  p, fs_usb, t.dout,1024))
+
+    # start the recording and playing threads
+    t_play.start()
+
+    # give some time before starting
+    time.sleep(1)
+
+    n = 0
+    state = 0
     while(1):
         tmp = Qin.get()
+        Qout.put(tmp)
         packets = t.tnc.processBuffer(tmp)
+        n += 1
+        #if(n % 10 == 0):
+            #print("processing ", n)
+        #    pdb.set_trace()
         for ax in packets:
             npack = npack+1
             print ((str(npack) +")", str(ax)))
             if state == 0 and ax.destination[:5]=="BEGIN":
-                f1 = open(dir + "rec_"+ax.info,"wb")
+                f1 = open(fname,"wb")
                 state = 1
             elif state == 1 and ax.destination[:3] == "END":
                 state = 2
+                f1.close()
                 break
             elif state == 1:
                 f1.write(ax.info)
@@ -104,7 +129,8 @@ def receiver_main(user, serial_number, fname):
         if state == 2 :
             break
     cQin.put("EOT")
-    f1.close()
+    cQout.put('EOT')
+   
 
 def main():
     args = init_args()
@@ -121,7 +147,9 @@ def main():
         test.run_tests(user, serial_number)
     else:
         #test.test_image(user, serial_number)
-        transmitter_main(user, serial_number, file_path)
+        #transmitter_main(user, serial_number, file_path)
+        receiver_main(user, serial_number, file_path)
+
         # read in image
         #image = misc.imread(file_path)
         # compress image and prepare for transmission
@@ -136,7 +164,7 @@ def main():
         # transmit packets
         #t.transmit_packet(packet)
 
-        #r = receiver.Receiver(user, serial_number)
+        #r = receiver.Receiver(user, serial_number,)
 
         #im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
     #    if VIEW:

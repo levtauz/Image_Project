@@ -112,38 +112,39 @@ def play_audio( Q,ctrlQ ,p, fs , dev, ser="", keydelay=0.3):
                 break
 
 def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
-    # record_audio records audio with sampling rate = fs
-    # queue - output data queue
-    # p     - pyAudio object
-    # fs    - sampling rate
-    # dev   - device number
-    # chunk - chunks of samples at a time default 1024
-    #
-    # Example:
-    # fs = 44100
-    # Q = Queue.queue()
-    # p = pyaudio.PyAudio() #instantiate PyAudio
-    # record_audio( Q, p, fs, 1) #
-    # p.terminate() # terminate pyAudio
+	# record_audio records audio with sampling rate = fs
+	# queue - output data queue
+	# p     - pyAudio object
+	# fs    - sampling rate
+	# dev   - device number
+	# chunk - chunks of samples at a time default 1024
+	#
+	# Example:
+	# fs = 44100
+	# Q = Queue.queue()
+	# p = pyaudio.PyAudio() #instantiate PyAudio
+	# record_audio( Q, p, fs, 1) #
+	# p.terminate() # terminate pyAudio
 
-    istream = p.open(format=pyaudio.paFloat32, channels=1, rate=int(fs),input=True,input_device_index=dev,frames_per_buffer=chunk)
+	istream = p.open(format=pyaudio.paFloat32, channels=1, rate=int(fs),input=True,input_device_index=dev,frames_per_buffer=chunk)
 
-    # record audio in chunks and append to frames
-    frames = [];
-    while (1):
-        if not ctrlQ.empty():
-            ctrlmd = ctrlQ.get()
-            if ctrlmd is "EOT"  :
-                istream.stop_stream()
-                istream.close()
-                print("Closed  record thread")
-                return;
-        try:  # when the pyaudio object is distroyed stops
-            data_str = istream.read(chunk) # read a chunk of data
-        except:
-            break
-        data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
-        queue.put( data_flt ) # append to list
+	# record audio in chunks and append to frames
+	frames = [];
+	while (1):
+		if not ctrlQ.empty():
+			ctrlmd = ctrlQ.get()
+			if ctrlmd is "EOT"  :
+				istream.stop_stream()
+				istream.close()
+				print("Closed  record thread")
+				return;
+		try:  # when the pyaudio object is distroyed stops
+			data_str = istream.read(chunk,exception_on_overflow = False) # read a chunk of data
+		except Exception as e:
+			print(e.strerror)
+			break
+		data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
+		queue.put( data_flt ) # append to list
 
 
 class TNCaprs:
@@ -289,22 +290,24 @@ class TNCaprs:
 
 
     def PLL(self, NRZa):
-        idx = zeros(len(NRZa)//int(self.Ns)*2)   # allocate space to save indexes
-        c = 0
+		idx = zeros(len(NRZa)//int(self.Ns)*2)   # allocate space to save indexes
+		c = 0
 
-        for n in range(1,len(NRZa)):
-            if (self.pll < 0) and (self.ppll >0):
-                idx[c] = n
-                c = c+1
+		for n in range(1,len(NRZa)):
+			if (self.pll < 0) and (self.ppll >0):
+				idx[c] = n
+				c = c+1
 
-            if (NRZa[n] >= 0) !=  (NRZa[n-1] >=0):
-                self.pll = int32(self.pll*self.plla)
+			if (NRZa[n] >= 0) !=  (NRZa[n-1] >=0):
+				self.pll = int32(self.pll*self.plla)
+			
+			self.ppll = self.pll
+			try:
+				self.pll = int32(self.pll+ self.dpll)
+			except:
+				pass
 
-
-            self.ppll = self.pll
-            self.pll = int32(self.pll+ self.dpll)
-
-        return idx[:c].astype(int32)
+		return idx[:c].astype(int32)
 
 
 
