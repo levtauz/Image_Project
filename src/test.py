@@ -2,7 +2,6 @@
 import transmitter
 import receiver
 import time
-import ax25
 
 import pyaudio
 import threading
@@ -12,8 +11,10 @@ import utils
 import sys
 if sys.version_info.major == 2:
     import Queue
+    import ax25
 else:
     import queue as Queue
+    import ax25_3 as ax25
 
 DEBUG=True
 

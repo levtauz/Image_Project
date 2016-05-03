@@ -6,8 +6,10 @@ import sys
 
 if sys.version_info.major == 2:
     import Queue
+    import ax25
 else:
     import queue as Queue
+    import ax25_3 as ax25
 
 import numpy as np
 from numpy import pi
@@ -40,7 +42,6 @@ from numpy.fft import fftshift
 from numpy.fft import ifft
 from numpy.fft import ifftshift
 from  scipy.io.wavfile import read as wavread
-import ax25
 import bitarray
 from numpy import int32
 from fractions import gcd
