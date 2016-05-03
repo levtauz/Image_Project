@@ -18,7 +18,6 @@ from bitarray import bitarray
 
 import pdb
 
-
 DEBUG=True
 
 def psnr(im_truth, im_test, maxval=255.):
@@ -84,7 +83,7 @@ def printDevNumbers(output):
         N = p.get_device_count()
         for n in range(0,N):
             name = p.get_device_info_by_index(n).get('name')
-            print_msg( (n, name), DEBUG)
+            print_msg( "{} {}".format(n, name), DEBUG)
         p.terminate()
 
 def get_dev_numbers(person, output=False):
@@ -104,12 +103,11 @@ def get_dev_numbers(person, output=False):
         dusb_out = 5
         din = 2
         dout = 4
-    elif person =="lab":
+    elif person == "lab": # for lab computers
         dusb_in = 1
         dusb_out = 3
         din = 0
         dout = 2
-
     return (dusb_in, dusb_out, din, dout)
 
 def setup_serial(com_num):
@@ -196,7 +194,7 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
         f_range = [ fc, fs / 2.0 + fc]
         xmf = np.fft.fft(xmw,len(xmw),axis=0)
         sg_plot(t_range, f_range, xmf[0:m/2,:],dbf=dbf)
-        print 1
+        print_msg(1, DEBUG)
     else:
         f_range = [-fs / 2.0 + fc, fs / 2.0 + fc]
         xmf = np.fft.fftshift( np.fft.fft( xmw ,len(xmw),axis=0), axes=0 )

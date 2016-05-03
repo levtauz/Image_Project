@@ -1,7 +1,6 @@
 # import own file packages
 import aprs
 import JPEG
-import ax25
 import threading
 import pyaudio
 import time
@@ -11,8 +10,10 @@ import utils
 import sys
 if sys.version_info.major == 2:
     import Queue
+    import ax25
 else:
     import queue as Queue
+    import ax25_3 as ax25
 
 
 # debugging

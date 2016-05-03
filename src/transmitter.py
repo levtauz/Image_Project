@@ -1,6 +1,5 @@
 # import own file packages
 import aprs
-import ax25
 import utils
 
 import bitarray
@@ -9,9 +8,10 @@ import pyaudio
 import sys
 if sys.version_info.major == 2:
     import Queue
+    import ax25
 else:
     import queue as Queue
-
+    import ax25_3 as ax25
 
 import time
 import numpy as np
