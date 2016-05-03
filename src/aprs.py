@@ -505,7 +505,7 @@ def APRS_rcv(Qin, Qout, Qtext, modem):
 
 
      while(1):
-         tmp = Qin.get()
+        tmp = Qin.get()
         Qout.put(tmp)
         packets  = modem.processBuffer(tmp)
         for ax in packets:
