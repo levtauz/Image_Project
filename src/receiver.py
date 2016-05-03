@@ -2,24 +2,59 @@
 import aprs
 import JPEG
 import ax25
+import threading
+import pyaudio
+import Queue
+import time
 
 
 # debugging
 import pdb
 
+DEBUG=True
+
 class Receiver():
-    def __init__(self, user, serial_number, fs=48000.0, gain=0.5):
-        self.tnc = aprs.TNCaprs(fs)
+    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=1200):
+        self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud)
         self.s = utils.setup_serial(serial_number)
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_number(user)
         self.gain = gain
 
-    def record(self, dev_num=-1):
+    def record(self, file_path, dev_num=-1):
         Q = Queue.queue()
+        cQ = Queue.queue()
         p = pyaudio.PyAudio()
         if dev_num == -1:
             dev_num = self.dusb_in
-        record_audio(Q, p, self.fs, dev_num)
+        t_rec = threading.Thread(target=aprs.record_audio, args=(Q, cQ, p, self.fs, dev_num, self.s))
+        t_rec.start()
+        time.sleep(2)
+        npack = 0
+        while(1):
+            tmp = Q.get()
+            packets = self.tnc.processBuffer(tmp)
+            for ax in packets:
+                npack = npack+1
+                utils.print_msg((str(npack) +")", str(ax)), DEBUG)
+                if state == 0 and ax.destination[:5]=="BEGIN":
+                    #f1 = open(dir + "rec_"+ax.info,"wb")
+                    f1 = open("rec_" + file_path, "wb")
+                    state = 1
+                elif state == 1 and ax.destination[:3] == "END":
+                    state = 2
+                    f1.close()
+                    break
+                elif state == 1:
+                    f1.write(ax.info)
+                    utils.print_msg("write", DEBUG)
+            if state == 2 :
+                break
+
+        time.sleep(75)
+        cQ.put("EOT")
+        p.terminate()
+        f1.close()
+
         # get recorded audio from queue
         sig = []
         for n in xrange(0, Q.qsize()):
@@ -50,10 +85,9 @@ class Receiver():
                     npack += 1
                     print (str(npack) + ") |DEST:" + ax.destination[:-1] + " |SRC:" + ax.source + " |DIGI:" + ax.digipeaters + " |", ax.info, "|")
 
-
 def main():
-      pass
+    r = Receiver()
 
-if __name__ == "__main__":
-      main()
 
+if __name__ == "main":
+    main()

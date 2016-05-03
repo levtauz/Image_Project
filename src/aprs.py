@@ -137,7 +137,8 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
                 return;
         try:  # when the pyaudio object is distroyed stops
             data_str = istream.read(chunk) # read a chunk of data
-        except:
+        except Exception as e:
+            print("{} {}".format(e.errno, e.strerror))
             break
         data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
         queue.put( data_flt ) # append to list
@@ -182,6 +183,7 @@ class TNCaprs:
         self.h_lpp = signal.firwin(self.N,self.BW*2*1.2/fs,window='hanning')
         self.h_space = self.h_lp*exp(1j*2*pi*(self.space_f)*r_[-self.N/2:self.N/2]/fs)
         self.h_mark = self.h_lp*exp(1j*2*pi*(self.mark_f)*r_[-self.N/2:self.N/2]/fs)
+
         fc = (self.space_f + self.mark_f) / 2
         self.h_bp = signal.firwin(self.N,self.BW/fs*2.2,window='hanning')*exp(1j*2*pi*fc*r_[-self.N/2:self.N/2]/fs)
 
@@ -207,8 +209,6 @@ class TNCaprs:
         self.chunk_count = 0              # chunk counter
         self.oldbits = bitarray.bitarray([0,0,0,0,0,0,0])    # bits from end of prev buffer to be copied to beginning of new
         self.Npackets = 0                 # packet counter
-
-
 
 
     def NRZ2NRZI(self,NRZ, prevBit = True):
@@ -237,9 +237,6 @@ class TNCaprs:
     #         fs    - sampling rate
     # Outputs:
     #         sig    -  returns afsk1200 modulated signal
-        #mark_f = 1200
-        #space_f = 2400
-        #baud = 2400
         fs_lcm = lcm((self.baud, self.fs))
 
         fc = (self.mark_f+self.space_f)/2
@@ -274,15 +271,12 @@ class TNCaprs:
 
 
     def demod(self, buff):
-
-
         SIG = signal.fftconvolve(buff,self.h_bp,mode='valid')
         mark = signal.fftconvolve(SIG,self.h_mark,mode='valid')
         space = signal.fftconvolve(SIG,self.h_space,mode='valid')
         NRZ = abs(mark)-abs(space)
         NRZ = signal.fftconvolve(NRZ,self.h_lpp,mode='valid')
         return NRZ
-
 
 
     def PLL(self, NRZa):
@@ -404,9 +398,6 @@ class TNCaprs:
 
         if foundPacket == False:
             return ax
-
-
-
 
         bytes = bitsu.tobytes()
         ax.destination = ax.callsign_decode(bitsu[:56])

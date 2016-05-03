@@ -191,6 +191,10 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
 
     return t_range, f_range, xmf
 
+def print_msg(msg, debug=True):
+    if debug:
+        print(msg)
+
 
 #####
 #GZIP
@@ -232,5 +236,4 @@ def get_file_size(fname):
     Returns the file size in Bytes
     """
     return os.path.getsize(fname)
-
 
