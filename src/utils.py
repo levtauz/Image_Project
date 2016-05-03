@@ -209,6 +209,15 @@ def file_to_bitarray(fname):
         ba.fromfile(f)
     return ba
 
+def gzip_to_data(fname):
+	"""
+	assume file is int16 data
+	"""
+	with gzip.open(fname, 'rb') as f:
+		data = f.read()
+	return np.fromstring(data,dtype = int16)
+
+
 def data_to_bitarray(data):
     """
     assume data is a string

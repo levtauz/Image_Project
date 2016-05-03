@@ -76,6 +76,9 @@ def main():
 
 
         #test.test_image(user, serial_number)
+        #transmitter_main(user, serial_number, file_path)
+        receiver_main(user, serial_number, file_path)
+
         # read in image
         #image = misc.imread(file_path)
         # compress image and prepare for transmission
@@ -89,6 +92,8 @@ def main():
 
         # transmit packets
         #t.transmit_packet(packet)
+
+        #r = receiver.Receiver(user, serial_number,)
 
         #im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
     #    if VIEW:

@@ -17,13 +17,27 @@ import pdb
 import matplotlib.pyplot as plt
 
 #Compression
-def zeropad_image(V):
+def zero_pad_image(V):
     def roundup(x):
         return int(math.ceil(x * 1.0 / 8)) * 8
     rows, cols = roundup(V.shape[0]), roundup(V.shape[1])
     zeros = np.zeros((rows, cols, 3), dtype='uint8')
     zeros[:V.shape[0], :V.shape[1], :] = V
     return zeros
+
+def reflect_pad_image(V):
+    def roundup(x):
+        return int(math.ceil(x * 1.0 / 8)) * 8
+    rows, cols = roundup(V.shape[0]) - V.shape[0], roundup(V.shape[1]) - V.shape[1]
+    shape = ((0,rows), (0,cols), (0,0))
+    return np.pad(V,shape,mode = "reflect")
+
+def constant_pad_image(V):
+    def roundup(x):
+        return int(math.ceil(x * 1.0 / 8)) * 8
+    rows, cols = roundup(V.shape[0]) - V.shape[0], roundup(V.shape[1]) - V.shape[1]
+    shape = ((0,rows), (0,cols), (0,0))
+    return np.pad(V,shape,mode = "edge")
 
 def block_image(V):
     l = []
@@ -143,7 +157,7 @@ def JPEG_compression(image, quality = 50):
     [number of blocks, 8,8,3]
     """
     #Prepocessing
-    im = zeropad_image(image)
+    im = reflect_pad_image(image)
     im = rgb2lab(im)
     im[:,:,[1,2]] += 128
     #Blocked into 8x8 blocks and apply DCT
@@ -212,5 +226,6 @@ def main():
    
     im = JPEG_decompression(data,quality,image.shape[0],image.shape[1])
     print("PSNR = {0}".format(utils.psnr(image,im)))
+
 if __name__ == "__main__":
     main()
