@@ -42,6 +42,12 @@ import ax25
 import bitarray
 import string
 
+import sys
+if sys.version_info.major == 2:
+    import Queue
+else:
+    import queue as Queue
+
 
 
 def hex_escape(s):

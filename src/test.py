@@ -4,11 +4,16 @@ import receiver
 import time
 import ax25
 
-import Queue
 import pyaudio
 import threading
 import aprs
 import utils
+
+import sys
+if sys.version_info.major == 2:
+    import Queue
+else:
+    import queue as Queue
 
 DEBUG=True
 
@@ -77,7 +82,7 @@ def test_sms(user, serial_number):
     #info = ":EMAIL    :h.wang94@berkeley.edu Hi, test email!"
 
     # Uncomment to Send an SMS message to a phone number
-    info = ":SMSGTE   :@4089312267 Hi. This is a test message text"
+    info = ":SMSGTE   :@4089312267 This is a test message from test_sms()"
 
     #uncomment to show yourself on mt everest
     #info = "=2759.16N/08655.30E[I'm on the top of the world"
@@ -124,6 +129,6 @@ def test_decode_mult_iss_packets(user, serial_number):
 
 def run_tests(user, serial_number):
     test_sms(user, serial_number)
-    test_image(user, serial_number)
-    test_decode_iss_packet(user, serial_number)
-    test_decode_mult_iss_packets(user, serial_number)
+    #test_image(user, serial_number)
+    #test_decode_iss_packet(user, serial_number)
+    #test_decode_mult_iss_packets(user, serial_number)

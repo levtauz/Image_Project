@@ -245,4 +245,3 @@ def get_file_size(fname):
     Returns the file size in Bytes
     """
     return os.path.getsize(fname)
-

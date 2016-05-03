@@ -1,9 +1,13 @@
 # Import functions and libraries
 import numpy as np
 import pyaudio
-import Queue
 import threading,time,datetime
 import sys
+
+if sys.version_info.major == 2:
+    import Queue
+else:
+    import queue as Queue
 
 import numpy as np
 from numpy import pi

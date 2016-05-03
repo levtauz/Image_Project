@@ -4,8 +4,15 @@ import JPEG
 import ax25
 import threading
 import pyaudio
-import Queue
 import time
+
+import utils
+
+import sys
+if sys.version_info.major == 2:
+    import Queue
+else:
+    import queue as Queue
 
 
 # debugging
@@ -90,7 +97,7 @@ class Receiver():
                     npack += 1
                     print (str(npack) + ") |DEST:" + ax.destination[:-1] + " |SRC:" + ax.source + " |DIGI:" + ax.digipeaters + " |", ax.info, "|")
 
-    def terminate():
+    def terminate(self):
         """
         terminate whatever may be still open
         """

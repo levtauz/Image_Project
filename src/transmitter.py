@@ -5,7 +5,14 @@ import utils
 
 import bitarray
 import pyaudio
-import Queue
+
+import sys
+if sys.version_info.major == 2:
+    import Queue
+else:
+    import queue as Queue
+
+
 import time
 import numpy as np
 
@@ -15,8 +22,8 @@ import pdb
 DEBUG=True
 
 class Transmitter():
-    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=2400):
-        self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud)
+    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=2400, mark_f=1200, space_f=2400):
+        self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud, mark_f, space_f)
         self.s = utils.setup_serial(serial_number)
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_numbers(user)
         self.gain = gain
@@ -89,7 +96,7 @@ class Transmitter():
         time.sleep(1)
         p.terminate()
 
-    def terminate():
+    def terminate(self):
         """
         terminate whatever may still be open
         """
