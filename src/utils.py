@@ -9,7 +9,16 @@ import serial
 import sys
 import time
 
+import gzip
+
+import sys
+import os
+
+from bitarray import bitarray
+
 import pdb
+
+
 
 def psnr(im_truth, im_test, maxval=255.):
     """
@@ -78,7 +87,7 @@ def printDevNumbers(output):
         p.terminate()
 
 def get_dev_numbers(person, output=False):
-    printDevNumbers(output)
+    printDevNumbers(True)
     if person == "h": # personal setup for harrison
         dusb_in = 1
         dusb_out = 5
@@ -187,3 +196,56 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
         sg_plot(t_range, f_range, xmf,dbf = dbf)
 
     return t_range, f_range, xmf
+
+
+#####
+#GZIP
+#####
+
+def file_to_bitarray(fname):
+    """
+    assume file is path to a file
+    """
+    ba = bitarray()
+    with open(fname, 'rb') as f:
+        ba.fromfile(f)
+    return ba
+
+def gzip_to_data(fname):
+	"""
+	assume file is int16 data
+	"""
+	with gzip.open(fname, 'rb') as f:
+		data = f.read()
+	return np.fromstring(data,dtype = int16)
+
+
+def data_to_bitarray(data):
+    """
+    assume data is a string
+    """
+    ba = bitarray()
+    ba.frombytes(data)
+    return ba
+
+def bitarray_to_data(bits):
+    """
+    assume bits contain int16 data
+    """
+    return np.fromstring(bits,dtype = np.int16)
+
+def save_to_gzip(data,fname):
+    """
+    Saves data to a gzip file
+    fname: name of gzip file, do not at gz to the end
+    """
+    with gzip.open(fname  + '.gz', 'wb',compresslevel = 9) as f:
+        f.write(data)
+
+def get_file_size(fname):
+    """
+    Returns the file size in Bytes
+    """
+    return os.path.getsize(fname)
+
+

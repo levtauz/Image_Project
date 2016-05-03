@@ -37,6 +37,101 @@ def init_args():
     args = parser.parse_args()
     return args
 
+def transmitter_main(user, serial_number, fname):
+    callsign = "KM6BHD"
+    fs = 48000
+    t = transmitter.Transmitter(user, serial_number)
+    Qout = Queue.Queue()
+    cQout = Queue.Queue()
+    p = pyaudio.PyAudio()
+    t_play = threading.Thread(target = aprs.play_audio, args = (Qout, cQout, p, fs, t.dusb_out, t.s))
+
+    f = open(fname, 'rb')
+
+    print "Putting packets in Queue"
+
+    npp = 0
+
+    Qout.put("KEYON")
+    tmp = t.tnc.modulatPacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
+    Qout.put(tmp)
+    while(1):
+	bytes = f.read(256)
+	tmp = t.tnc.modulatPacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
+	Qout.put(tmp)
+	npp = npp+1
+        if npp > 5:
+            break
+	if len(bytes) < 256:
+            break
+    tmp = t.tnc.modulatPacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
+    Qout.put(tmp)
+    Qout.put("KEYOFF")
+    Qout.put("EOT")
+
+    print "Done generating packets. Generated {} packets".format(npp)
+    #aprs.play_audio(Qout, cQout, p, fs, t.dusb_out, t.s, keydelay=0.5)
+    t_play.start()
+    time.sleep(75)
+    cQout.put("EOT")
+    time.sleep(1)
+    p.terminate()
+    f.close()
+
+def receiver_main(user, serial_number, fname):
+    fs = 48000
+    cQin = Queue.Queue()
+    Qin = Queue.Queue()
+    p = pyaudio.PyAudio()
+
+    t = transmitter.Transmitter(user, serial_number)
+    
+    fs_usb = p.get_device_info_by_index(t.dusb_in)['defaultSampleRate']
+    print(fs_usb)
+    t_rec = threading.Thread(target=aprs.record_audio, args=(Qin, cQin, p, fs_usb, t.dusb_in, 1024))
+    t_rec.start()
+    
+    #aprs.record_audio(Qin, cQin, p, fs, t.dusb_in)
+    cQout = Queue.Queue()
+    Qout = Queue.Queue()
+
+    t_play = threading.Thread(target = aprs.play_audio,   args = (Qout,cQout,  p, fs_usb, t.dout,1024))
+
+    # start the recording and playing threads
+    t_play.start()
+
+    # give some time before starting
+    time.sleep(1)
+
+    n = 0
+    state = 0
+    while(1):
+        tmp = Qin.get()
+        Qout.put(tmp)
+        packets = t.tnc.processBuffer(tmp)
+        n += 1
+        #if(n % 10 == 0):
+            #print("processing ", n)
+        #    pdb.set_trace()
+        for ax in packets:
+            npack = npack+1
+            print ((str(npack) +")", str(ax)))
+            if state == 0 and ax.destination[:5]=="BEGIN":
+                f1 = open(fname,"wb")
+                state = 1
+            elif state == 1 and ax.destination[:3] == "END":
+                state = 2
+                f1.close()
+                break
+            elif state == 1:
+                f1.write(ax.info)
+                print("write")
+        if state == 2 :
+            break
+    cQin.put("EOT")
+    cQout.put('EOT')
+   
+
 def main():
     args = init_args()
 
@@ -51,10 +146,14 @@ def main():
     if test_number != -1:
         test.run_tests(user, serial_number)
     else:
+        #test.test_image(user, serial_number)
+        #transmitter_main(user, serial_number, file_path)
+        receiver_main(user, serial_number, file_path)
+
         # read in image
-        image = misc.imread(file_path)
+        #image = misc.imread(file_path)
         # compress image and prepare for transmission
-        data = JPEG.JPEG_compression(image, jpeg_quality)
+        #data = JPEG.JPEG_compression(image, jpeg_quality)
 
         # Initiate a transmitter
         #t = transmitter.Transmitter(user, serial_number)
@@ -65,16 +164,16 @@ def main():
         # transmit packets
         #t.transmit_packet(packet)
 
-        #r = receiver.Receiver(user, serial_number)
+        #r = receiver.Receiver(user, serial_number,)
 
-        im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
-        if VIEW:
-            plt.figure()
-            plt.subplot(1,2,1)
-            plt.imshow(image)
-            plt.subplot(1,2,2)
-            plt.imshow(im)
-            plt.show()
+        #im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
+    #    if VIEW:
+            #plt.figure()
+            #plt.subplot(1,2,1)
+            #plt.imshow(image)
+            #plt.subplot(1,2,2)
+            #plt.imshow(im)
+            #plt.show()
 
 
 if __name__ == "__main__":
