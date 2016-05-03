@@ -286,7 +286,6 @@ class TNCaprs:
     def PLL(self, NRZa):
         idx = zeros(len(NRZa)//int(self.Ns)*2)   # allocate space to save indexes
         c = 0
-
         for n in range(1,len(NRZa)):
             if (self.pll < 0) and (self.ppll >0):
                 idx[c] = n
