@@ -10,13 +10,13 @@ import threading
 import aprs
 import utils
 
+DEBUG=True
+
 def test_image(user, serial_number):
     """
     loop back mode
     """
-    cQout = Queue.Queue()
-    Qout = Queue.Queue()
-
+    # setup variables for tests
     callsign = "KK6MRI"
     fname = "calBlue.tiff"
     dir = "images/"
@@ -25,12 +25,16 @@ def test_image(user, serial_number):
     fs = 48000
     Abuffer = 1024
     Nchunks = 12
-    modem = transmitter.Transmitter(user, serial_number)
 
+    # prepare transmitter and receiver
+    t = transmitter.Transmitter(user, serial_number, fs=fs, Abuffer=Abuffer, Nchunks=Nchunks)
+    r = receiver.Receiver(user, serial_number, fs=fs, Abuffer=Abuffer, Nchunks=Nchunks)
+
+    # prepare i/o queues
     Qin = Queue.Queue()
     Qout = Queue.Queue()
 
-# create a control fifo to kill threads when done
+    # create a control fifo to kill threads when done
     cQin = Queue.Queue()
     cQout = Queue.Queue()
 
@@ -38,27 +42,11 @@ def test_image(user, serial_number):
     p = pyaudio.PyAudio()
 
     # initialize a recording thread. 
-    t_rec = threading.Thread(target = aprs.record_audio,   args = (Qin, cQin, p, fs, modem.dusb_in))
-    t_play = threading.Thread(target = aprs.play_audio,   args = (Qout, cQout, p, fs, modem.dusb_out))
+    t_rec = threading.Thread(target = aprs.record_audio, args = (Qin, cQin, p, fs, r.dusb_in))
+    t_play = threading.Thread(target = aprs.play_audio, args = (Qout, cQout, p, fs, t.dusb_out))
 
-    print("Putting packets in Queue")
-
-    npp = 0
-    tmp = modem.tnc.modulatePacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
-    Qout.put(tmp)
-    while(1):
-	bytes = f.read(256)
-	tmp = modem.tnc.modulatePacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
-	Qout.put(tmp)
-	npp = npp+1
-	if len(bytes) < 256:
-            break
-    tmp = modem.tnc.modulatePacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
-    Qout.put(tmp)
-    Qout.put("EOT")
-
-    print("Done generating packets")
-
+    # generate packets and put into output queue
+    Qout = t.generate_packets(Qout, callsign)
 
     # start the recording and playing threads
     t_rec.start()
@@ -66,37 +54,20 @@ def test_image(user, serial_number):
     t_play.start()
 
     starttime = time.time()
-    npack = 0
-    state = 0
-    while(1):
-	tmp = Qin.get()
-	Qout.put(tmp)
-	packets  = modem.tnc.processBuffer(tmp)
-	#print len(packets)
-	for ax in packets:
-            npack = npack + 1
-            print((str(npack)+")",str(ax)))
-            if state == 0 and ax.destination[:5]=="BEGIN":
-                f1 = open(dir + "rec_"+ax.info,"wb")
-                state = 1
-            elif state == 1 and ax.destination[:3] == "END":
-                state = 2
-                break
-            elif state == 1:
-                f1.write(ax.info)
-                print("write")
-        if state == 2 :
-            break
 
-    print(time.time() - starttime)
+    # process packets and put them into input queue
+    r.process_packets(Qin, file_path)
+
+    utils.print_msg(time.time() - starttime, DEBUG)
     cQout.put("EOT")
     cQin.put("EOT")
-    f1.close()
-    f.close()
+    t.terminate()
+    r.terminate()
+
 
 def test_sms(user, serial_number):
-    print "Running SMS Test"
-    t = transmitter.Transmitter(user, serial_number)
+    utils.print_msg("Running SMS Test", DEBUG)
+    t = transmitter.Transmitter(user, serial_number, baud=1200)
 
     callsign = "KM6BHD"
     Digi =b'WIDE1-1,WIDE2-1'
@@ -119,37 +90,40 @@ def test_sms(user, serial_number):
 
     #uncomment to send a status message
     #info = ">I like radios"
-    print "Preparing packet..."
+    utils.print_msg("Preparing packet...", DEBUG)
     packet = ax25.UI(
             destination=dest,
             source=callsign,
             info=info,
             digipeaters=Digi.split(b','),
             )
-    print "Transmitting packet..."
+    utils.print_msg("Transmitting packet...", DEBUG)
     t.transmit_packet(packet)
     time.sleep(2)
-    print "Finished transmitting packet..."
-    t.s.close()
+    utils.print_msg("Finished transmitting packet...", DEBUG)
+    t.terminate()
 
 def test_decode_iss_packet(user, serial_number):
     fs, sig = waveread("test_files/ISSpkt.wav")
-    r = receiver.Receiver(user, serial_number, fs)
+    r = receiver.Receiver(user, serial_number, fs=fs)
     packets = r.parse_data(sig)
     decode_packets(packets)
     expected = 1
-    print "Found {} packet. Expected {}".format(found, expected)
-    r.s.close()
+    utils.print_msg("Found {} packet. Expected {}".format(found, expected), DEBUG)
+    r.terminate()
 
 def test_decode_mult_iss_packets(user, serial_number):
     fs, sig = waveread("test_files/ISS.wav")
-    r = receiver.Receiver(user, serial_number, fs)
+    r = receiver.Receiver(user, serial_number, fs=fs)
     packets = r.parse_data(sig)
     decode_packets(packets)
     found = len(filter(lambda ax: ax.info != 'bad packet', map(r.tnc.decodeAX25, filter(lambda pkt: len(pkt) > 200, packets))))
     expected = 24
-    print "Found {} packet. Expected {}".format(found, expected)
-    r.s.close()
+    utils.print_msg("Found {} packet. Expected {}".format(found, expected), DEBUG)
+    r.terminate()
 
 def run_tests(user, serial_number):
     test_sms(user, serial_number)
+    test_image(user, serial_number)
+    test_decode_iss_packet(user, serial_number)
+    test_decode_mult_iss_packets(user, serial_number)

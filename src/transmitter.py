@@ -21,7 +21,7 @@ class Transmitter():
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_numbers(user)
         self.gain = gain
 
-    def __packets_to_queue(self, file_path, callsign, Qout, bytes_read=256):
+    def packets_to_queue(self, file_path, callsign, Qout, bytes_read=256):
         f = open(file_path, 'rb')
         npp = 0
         while(1):
@@ -34,28 +34,32 @@ class Transmitter():
         f.close()
         return Qout
 
-    def transmit_file(self, file_path, callsign="KM6BHD"):
-        Qout = Queue.Queue()
-        cQout = Queue.Queue()
-        p = pyaudio.PyAudio()
-        t_play = threading.Thread(target = aprs.play_audio , args=(Qout, cQout, p, self.tnc.fs, self.dusb_out, self.s))
-
+    def generate_packets(self, Qout, callsign):
         utils.print_msg("Putting packets in Queue", DEBUG)
 
         Qout.put("KEYON")
         tmp = self.tnc.modulatePacket(callsign, "", "BEGIN", fname , preflags=20, postflags=2 )
         Qout.put(tmp)
 
-        Qout = __packets_to_queue(file_path, callsign, Qout, 256)
+        Qout = self.packets_to_queue(file_path, callsign, Qout, 256)
 
         tmp = self.tnc.modulatePacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=20)
         Qout.put(tmp)
         Qout.put("KEYOFF")
         Qout.put("EOT")
 
-        utils.print_msg("Done generating packets. Generated {} packets".format(npp), DEBUG)
-        utils.print_msg("Playing packets", DEBUG)
+        utils.print_msg("Done generating packets. Generated {} packets".format(Qout.qsize()), DEBUG)
+        return Qout
 
+    def transmit_file(self, file_path, callsign="KM6BHD"):
+        Qout = Queue.Queue()
+        cQout = Queue.Queue()
+        p = pyaudio.PyAudio()
+        t_play = threading.Thread(target = aprs.play_audio , args=(Qout, cQout, p, self.tnc.fs, self.dusb_out, self.s))
+
+        Qout = self.generate_packets(Qout, callsign)
+
+        utils.print_msg("Playing packets", DEBUG)
         t_play.start()
         time.sleep(75)
         cQout.put("EOT")
@@ -84,3 +88,9 @@ class Transmitter():
 
         time.sleep(1)
         p.terminate()
+
+    def terminate():
+        """
+        terminate whatever may still be open
+        """
+        self.s.close()
