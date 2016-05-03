@@ -21,8 +21,8 @@ import pdb
 DEBUG=True
 
 class Receiver():
-    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=2400):
-        self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud)
+    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=2400, mark_f=1200, space_f=2400):
+        self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud, mark_f, space_f)
         self.s = utils.setup_serial(serial_number)
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_number(user)
         self.gain = gain
@@ -51,12 +51,12 @@ class Receiver():
                 break
 
     def record(self, file_path, dev_num=-1):
-        Q = Queue.queue()
-        cQ = Queue.queue()
+        Q = Queue.Queue()
+        cQ = Queue.Queue()
         p = pyaudio.PyAudio()
         if dev_num == -1:
             dev_num = self.dusb_in
-        t_rec = threading.Thread(target=aprs.record_audio, args=(Q, cQ, p, self.fs, dev_num, self.s))
+        t_rec = threading.Thread(target=aprs.record_audio, args=(Q, cQ, p, self.tnc.fs, dev_num, self.s))
         t_rec.start()
         time.sleep(2)
 

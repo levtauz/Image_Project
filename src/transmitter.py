@@ -16,6 +16,7 @@ else:
 import time
 import numpy as np
 
+import threading
 # debugging
 import pdb
 
@@ -41,11 +42,11 @@ class Transmitter():
         f.close()
         return Qout
 
-    def generate_packets(self, Qout, callsign):
+    def generate_packets(self, Qout, callsign, file_path):
         utils.print_msg("Putting packets in Queue", DEBUG)
 
         Qout.put("KEYON")
-        tmp = self.tnc.modulatePacket(callsign, "", "BEGIN", fname , preflags=20, postflags=2 )
+        tmp = self.tnc.modulatePacket(callsign, "", "BEGIN", file_path , preflags=20, postflags=2 )
         Qout.put(tmp)
 
         Qout = self.packets_to_queue(file_path, callsign, Qout, 256)
@@ -64,7 +65,7 @@ class Transmitter():
         p = pyaudio.PyAudio()
         t_play = threading.Thread(target = aprs.play_audio , args=(Qout, cQout, p, self.tnc.fs, self.dusb_out, self.s))
 
-        Qout = self.generate_packets(Qout, callsign)
+        Qout = self.generate_packets(Qout, callsign, file_path)
 
         utils.print_msg("Playing packets", DEBUG)
         t_play.start()
