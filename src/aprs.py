@@ -3,6 +3,7 @@ import numpy as np
 import pyaudio
 import threading,time,datetime
 import sys
+from functools import reduce
 
 if sys.version_info.major == 2:
     import Queue

@@ -83,7 +83,7 @@ def test_sms(user, serial_number):
     #info = ":EMAIL    :h.wang94@berkeley.edu Hi, test email!"
 
     # Uncomment to Send an SMS message to a phone number
-    info = ":SMSGTE   :@4089312267 This is a test message from test_sms()"
+    #info = ":SMSGTE   :@4089312267 Testing from lab computers"
 
     #uncomment to show yourself on mt everest
     #info = "=2759.16N/08655.30E[I'm on the top of the world"
@@ -92,7 +92,7 @@ def test_sms(user, serial_number):
     #info = ":ALL      : CQCQCQ I would like to talk to you!"
 
     #uncomment to report position
-    #info = "=3752.50N/12215.43WlIm using a laptop in Cory Hall!"
+    info = "=3752.50N/12215.43WlIm using a laptop in Cory Hall!"
 
     #uncomment to send a status message
     #info = ">I like radios"

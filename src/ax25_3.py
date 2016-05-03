@@ -151,10 +151,10 @@ class AX25(object):
         assert(len(ssid) == 1)
         assert(len(callsign) <= 6)
 
-        callsign = b"%b%b" % (callsign.ljust(6), ssid)
+        callsign = "{}{}".format(callsign.ljust(6), ssid).encode('ascii')
 
         # now shift left one bit, argh
-        # print(callsign)
+        print(callsign)
         # print([chr(char << 1) for char in callsign])
         return bytes(bytearray([char << 1 for char in callsign]))
 
@@ -166,11 +166,14 @@ class AX25(object):
 
 
     def encoded_addresses(self):
-        address_bytes = bytearray(b"%b%b%b" % (
-            AX25.callsign_encode(self.destination),
-            AX25.callsign_encode(self.source),
-            b"".join([AX25.callsign_encode(digi) for digi in self.digipeaters])
-        ))
+        address_bytes = AX25.callsign_encode(self.destination) + AX25.callsign_encode(self.source)
+        temp = b"".join([AX25.callsign_encode(digi) for digi in self.digipeaters])
+        address_bytes = bytearray(address_bytes + temp)
+        #address_bytes = bytearray(b"%b%b%b" % (
+        #    AX25.callsign_encode(self.destination),
+        #    AX25.callsign_encode(self.source),
+        #    b"".join([AX25.callsign_encode(digi) for digi in self.digipeaters])
+        #))
 
 
         # set the low order (first, with eventual little bit endian encoding) bit
@@ -181,12 +184,18 @@ class AX25(object):
         return address_bytes
 
     def header(self):
-        return b"%b%b%b" % (
-            self.encoded_addresses(),
-            self.control_field, # * 8,
-            self.protocol_id
-        )
+        temp = "{addresses}{control}{protocol}".format(addresses=self.encoded_addresses(),control=self.control_field, protocol=self.protocol_id)
+        #temp = "{}{}{}{}".format(self.encoded_addresses(), self.control_field, # * 8, self.protocol_id).encode('ascii')
+        return temp.encode('ascii')
+        #return b"%b%b%b" % (
+        #    self.encoded_addresses(),
+        #    self.control_field, # * 8,
+        #    self.protocol_id
+        #)
+
     def packet(self):
+        temp = "{}{}{}".format(self.header(), self.info, self.fcs()).encode('ascii')
+        return temp
         return b"%b%b%b" % (
             self.header(),
             self.info,
