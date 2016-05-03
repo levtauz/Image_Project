@@ -62,7 +62,6 @@ def bit_unstuff(data):
             else:
                 count = 0
             ret_bits.append(bit)
-            
             if count == 5:
                 logger.debug("Unstuffing bit")
                 skip = True;
@@ -167,8 +166,8 @@ class AX25(object):
 
     def encoded_addresses(self):
         address_bytes = AX25.callsign_encode(self.destination) + AX25.callsign_encode(self.source)
-        temp = b"".join([AX25.callsign_encode(digi) for digi in self.digipeaters])
-        address_bytes = bytearray(address_bytes + temp)
+        cs_encoded = b"".join([AX25.callsign_encode(digi) for digi in self.digipeaters])
+        address_bytes = bytearray(address_bytes + callsign_encoded)
         #address_bytes = bytearray(b"%b%b%b" % (
         #    AX25.callsign_encode(self.destination),
         #    AX25.callsign_encode(self.source),
@@ -184,9 +183,11 @@ class AX25(object):
         return address_bytes
 
     def header(self):
-        temp = "{addresses}{control}{protocol}".format(addresses=self.encoded_addresses(),control=self.control_field, protocol=self.protocol_id)
-        #temp = "{}{}{}{}".format(self.encoded_addresses(), self.control_field, # * 8, self.protocol_id).encode('ascii')
-        return temp.encode('ascii')
+        head = "{addresses}{control}{protocol}".format(
+                addresses=self.encoded_addresses(),
+                control=self.control_field, # * 8
+                protocol=self.protocol_id)
+        return head.encode('ascii')
         #return b"%b%b%b" % (
         #    self.encoded_addresses(),
         #    self.control_field, # * 8,
@@ -194,13 +195,13 @@ class AX25(object):
         #)
 
     def packet(self):
-        temp = "{}{}{}".format(self.header(), self.info, self.fcs()).encode('ascii')
-        return temp
-        return b"%b%b%b" % (
-            self.header(),
-            self.info,
-            self.fcs()
-        )
+        pkt = "{}{}{}".format(self.header(), self.info, self.fcs()).encode('ascii')
+        return pkt
+        #return b"%b%b%b" % (
+            #self.header(),
+            #self.info,
+            #self.fcs()
+        #)
     def unparse(self):
         flag = bitarray(endian="little")
         flag.frombytes(self.flag)
@@ -209,73 +210,65 @@ class AX25(object):
         bits.frombytes(b"".join([self.header(), self.info.encode('ascii'), self.fcs()]))
 
         return flag + bit_stuff(bits) + flag
-    
+
     def parse(self,bits):
         flag = bitarray(endian="little")
         flag.frombytes(self.flag)
 
         # extract bits from the first to second flag
         try:
-                flag_loc = bits.search(flag)
-                bits_noflag = bits[ flag_loc[0]+8:flag_loc[1] ]
-       
-                # Bit unstuff
-                bits_unstuff = bit_unstuff(bits_noflag)
-        
-        # Chop to length
-                bits_bytes = bits_unstuff.tobytes()
+            flag_loc = bits.search(flag)
+            bits_noflag = bits[ flag_loc[0]+8:flag_loc[1] ]
+            # Bit unstuff
+            bits_unstuff = bit_unstuff(bits_noflag)
+    # Chop to length
+            bits_bytes = bits_unstuff.tobytes()
 
-        # Split bits
-        
- #       header = bits_unstuff[:240]
-                h_dest = bits_unstuff[:56]
-                h_src  = bits_unstuff[56:112]
-                for n in range(14,len(bits_bytes)-1):
-                        if bits_bytes[n:n+2]=="\x03\xF0":
-                                break
-                if n==len(bits_bytes)-1 :
-                        self.destination = "no decode"
-                        self.source = "no decode"
-                        self.info = "no decode"
-                        self.digis = "no decode"
-                        return 
-
-                
-                digilen = (n-14)*8/7
-                h_digi = bits_unstuff[112:112+(n-14)*8]
-                h_len = 112 + (n-14)*8 + 16
-                fcs = bits_unstuff[-16:]
-                info = bits_unstuff[h_len:-16]
-
-
-        # Decode addresses
-                destination = self.callsign_decode(h_dest)
-                source = self.callsign_decode(h_src)
-        
-                if digilen == 0:
-                        digipeaters = ()
-                else:
-                        digipeters =  self.callsign_decode(h_digi)
-   #     digipeaters = (self.callsign_decode(header[112:168]), self.callsign_decode(header[168:224]))
-                print("Destination:\t", destination[:-1])
-                print("Source:\t\t", source[:-1])
- #       print "Digipeater1:\t", digipeaters[0][:-1], "-", digipeaters[0][-1]
-                print("Digipeaters:\t", digipeaters)
-                print("Info:\t\t", info.tobytes())
-        
-                self.destination = destination
-                self.source = source
-                self.info = info.tobytes()
-                self.digis = digipeaters 
-        except:
+    # Split bits
+#       header = bits_unstuff[:240]
+            h_dest = bits_unstuff[:56]
+            h_src  = bits_unstuff[56:112]
+            for n in range(14,len(bits_bytes)-1):
+                if bits_bytes[n:n+2]=="\x03\xF0":
+                    break
+            if n==len(bits_bytes)-1 :
                 self.destination = "no decode"
                 self.source = "no decode"
                 self.info = "no decode"
                 self.digis = "no decode"
-                return 
+                return
+
+            digilen = (n-14)*8/7
+            h_digi = bits_unstuff[112:112+(n-14)*8]
+            h_len = 112 + (n-14)*8 + 16
+            fcs = bits_unstuff[-16:]
+            info = bits_unstuff[h_len:-16]
 
 
-    
+        # Decode addresses
+            destination = self.callsign_decode(h_dest)
+            source = self.callsign_decode(h_src)
+            if digilen == 0:
+                digipeaters = ()
+            else:
+                digipeters =  self.callsign_decode(h_digi)
+#     digipeaters = (self.callsign_decode(header[112:168]), self.callsign_decode(header[168:224]))
+            print("Destination:\t", destination[:-1])
+            print("Source:\t\t", source[:-1])
+#       print "Digipeater1:\t", digipeaters[0][:-1], "-", digipeaters[0][-1]
+            print("Digipeaters:\t", digipeaters)
+            print("Info:\t\t", info.tobytes())
+            self.destination = destination
+            self.source = source
+            self.info = info.tobytes()
+            self.digis = digipeaters
+        except:
+            self.destination = "no decode"
+            self.source = "no decode"
+            self.info = "no decode"
+            self.digis = "no decode"
+            return
+
     def __repr__(self):
         return self.__str__()
     def __str__(self):
