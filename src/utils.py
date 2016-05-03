@@ -1,5 +1,6 @@
 import numpy as np
 import scipy as scp
+from scipy import misc
 import math
 import numpy as np
 
@@ -27,6 +28,11 @@ def psnr(im_truth, im_test, maxval=255.):
     mse = np.linalg.norm(im_truth.astype(np.float64) - im_test.astype(np.float64))**2 / np.prod(np.shape(im_truth))
     return 10 * np.log10(maxval ** 2 / mse)
 
+def downsample(im, factor):
+    return misc.imresize(im, (im.shape[0]/factor, im.shape[1]/factor))
+
+def upsample(im, orig_size):
+    return misc.imresize(im, orig_size)
 
 def text2Morse(text, fc, fs, dt):
     CODE = {'A': '.-',     'B': '-...',   'C': '-.-.',
@@ -116,7 +122,7 @@ def setup_serial(com_num):
             s = serial.Serial(port='COM4')
     else:
         if sys.platform == 'linux2':
-            s = serial.Serial(port='/dev/ttyUSB{0}'.format(com_num))
+            s = serial.Serial(port='/dev/ttyUSB{0}').format(com_num)
         else:
             s = serial.Serial(port='COM{}'.format(com_num))
     s.setDTR(0)
