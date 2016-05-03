@@ -67,7 +67,7 @@ def test_image(user, serial_number):
 
 def test_sms(user, serial_number):
     utils.print_msg("Running SMS Test", DEBUG)
-    t = transmitter.Transmitter(user, serial_number, baud=1200)
+    t = transmitter.Transmitter(user, serial_number, baud=1200, space_f=2200)
 
     callsign = "KM6BHD"
     Digi =b'WIDE1-1,WIDE2-1'
