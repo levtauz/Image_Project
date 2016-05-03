@@ -13,7 +13,11 @@ import gzip
 import sys
 import os
 
+from bitarray import bitarray
+
 import pdb
+
+
 
 def psnr(im_truth, im_test, maxval=255.):
     """
@@ -77,7 +81,7 @@ def printDevNumbers(output):
         p.terminate()
 
 def get_dev_numbers(person, output=False):
-    printDevNumbers(output)
+    printDevNumbers(True)
     if person == "h": # personal setup for harrison
         dusb_in = 1
         dusb_out = 5
