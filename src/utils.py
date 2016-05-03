@@ -98,6 +98,11 @@ def get_dev_numbers(person, output=False):
         dusb_out = 5
         din = 2
         dout = 4
+    elif person == "lab": # for lab computers
+        dusb_in = 1
+        dusb_out = 3
+        din = 0
+        dout = 2
     return (dusb_in, dusb_out, din, dout)
 
 def setup_serial(com_num):
