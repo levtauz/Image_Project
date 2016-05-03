@@ -15,7 +15,7 @@ import pdb
 DEBUG=True
 
 class Transmitter():
-    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=1200):
+    def __init__(self, user, serial_number, gain=0.5, fs=48000.0, Abuffer=1024, Nchunks=43, baud=2400):
         self.tnc = aprs.TNCaprs(fs, Abuffer, Nchunks, baud)
         self.s = utils.setup_serial(serial_number)
         self.dusb_in, self.dusb_out, self.din, self.dout = utils.get_dev_numbers(user)
