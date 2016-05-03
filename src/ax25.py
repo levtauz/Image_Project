@@ -205,64 +205,62 @@ class AX25(object):
 
         # extract bits from the first to second flag
         try:
-        	flag_loc = bits.search(flag)
-        	bits_noflag = bits[ flag_loc[0]+8:flag_loc[1] ]
-
-        	# Bit unstuff
-        	bits_unstuff = bit_unstuff(bits_noflag)
+            flag_loc = bits.search(flag)
+            bits_noflag = bits[ flag_loc[0]+8:flag_loc[1] ]
+            # Bit unstuff
+            bits_unstuff = bit_unstuff(bits_noflag)
 
         # Chop to length
-		bits_bytes = bits_unstuff.tobytes()
+            bits_bytes = bits_unstuff.tobytes()
 
         # Split bits
 
  #       header = bits_unstuff[:240]
-        	h_dest = bits_unstuff[:56]
-		h_src  = bits_unstuff[56:112]
-		for n in range(14,len(bits_bytes)-1):
-			if bits_bytes[n:n+2]=="\x03\xF0":
-				break
-		if n==len(bits_bytes)-1 :
-			self.destination = "no decode"
-			self.source = "no decode"
-			self.info = "no decode"
-			self.digis = "no decode"
-			return
+            h_dest = bits_unstuff[:56]
+            h_src  = bits_unstuff[56:112]
+            for n in range(14,len(bits_bytes)-1):
+                if bits_bytes[n:n+2]=="\x03\xF0":
+                    break
+            if n==len(bits_bytes)-1 :
+                self.destination = "no decode"
+                self.source = "no decode"
+                self.info = "no decode"
+                self.digis = "no decode"
+                return
 
 
-		digilen = (n-14)*8/7
-		h_digi = bits_unstuff[112:112+(n-14)*8]
-		h_len = 112 + (n-14)*8 + 16
-		fcs = bits_unstuff[-16:]
-        	info = bits_unstuff[h_len:-16]
+            digilen = (n-14)*8/7
+            h_digi = bits_unstuff[112:112+(n-14)*8]
+            h_len = 112 + (n-14)*8 + 16
+            fcs = bits_unstuff[-16:]
+            info = bits_unstuff[h_len:-16]
 
 
         # Decode addresses
-        	destination = self.callsign_decode(h_dest)
-        	source = self.callsign_decode(h_src)
+            destination = self.callsign_decode(h_dest)
+            source = self.callsign_decode(h_src)
 
-		if digilen == 0:
-			digipeaters = ()
-		else:
-			digipeters =  self.callsign_decode(h_digi)
+            if digilen == 0:
+                digipeaters = ()
+            else:
+                digipeters =  self.callsign_decode(h_digi)
    #     digipeaters = (self.callsign_decode(header[112:168]), self.callsign_decode(header[168:224]))
-        	print "Destination:\t", destination[:-1]
-        	print "Source:\t\t", source[:-1]
+            print "Destination:\t", destination[:-1]
+            print "Source:\t\t", source[:-1]
  #       print "Digipeater1:\t", digipeaters[0][:-1], "-", digipeaters[0][-1]
-        	print "Digipeaters:\t", digipeaters
-        	print "Info:\t\t", info.tobytes()
+            print "Digipeaters:\t", digipeaters
+            print "Info:\t\t", info.tobytes()
 
-		self.destination = destination
-		self.source = source
-		self.info = info.tobytes()
-		self.digis = digipeaters
+            self.destination = destination
+            self.source = source
+            self.info = info.tobytes()
+            self.digis = digipeaters
 	except:
-		self.destination = "no decode"
-		self.source = "no decode"
-		self.info = "no decode"
-		self.digis = "no decode"
-		return
-
+            self.destination = "no decode"
+            self.source = "no decode"
+            self.info = "no decode"
+            self.digis = "no decode"
+            return
 
 
     def __repr__(self):
