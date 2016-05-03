@@ -136,7 +136,7 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
                 print("Closed  record thread")
                 return;
         try:  # when the pyaudio object is distroyed stops
-            data_str = istream.read(chunk) # read a chunk of data
+            data_str = istream.read(chunk, exception_on_overflow=False) # read a chunk of data
         except Exception as e:
             print("{} {}".format(e.errno, e.strerror))
             break
@@ -146,7 +146,7 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
 
 class TNCaprs:
 
-    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=1200):
+    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=2400, mark_f=1200, space_f=2400):
 
         #  Implementation of an afsk1200 TNC.
         #
@@ -164,8 +164,8 @@ class TNCaprs:
 
         ## compute sizes based on inputs
         self.baud = baud
-        self.mark_f = 1200
-        self.space_f = 2200
+        self.mark_f = mark_f
+        self.space_f = space_f
         self.TBW = 2.0   # TBW for the demod filters
         self.N = (int(fs/baud*self.TBW)//2)*2+1   # length of the filters for demod
         self.fs = fs     # sampling rate
