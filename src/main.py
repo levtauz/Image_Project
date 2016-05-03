@@ -53,28 +53,30 @@ def transmitter_main(user, serial_number, fname):
     npp = 0
 
     Qout.put("KEYON")
-    tmp = t.tnc.modulatPacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
+    tmp = t.tnc.modulatePacket(callsign, "", "BEGIN", fname , preflags=20, postflags=2 )
     Qout.put(tmp)
     while(1):
 	bytes = f.read(256)
-	tmp = t.tnc.modulatPacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
+	tmp = t.tnc.modulatePacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
 	Qout.put(tmp)
 	npp = npp+1
         if npp > 5:
             break
 	if len(bytes) < 256:
             break
-    tmp = t.tnc.modulatPacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
+    tmp = t.tnc.modulatePacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=20)
     Qout.put(tmp)
     Qout.put("KEYOFF")
     Qout.put("EOT")
 
     print "Done generating packets. Generated {} packets".format(npp)
     #aprs.play_audio(Qout, cQout, p, fs, t.dusb_out, t.s, keydelay=0.5)
+    print "Playing packets"
     t_play.start()
     time.sleep(75)
     cQout.put("EOT")
     time.sleep(1)
+    print "Finished playing packets"
     p.terminate()
     f.close()
 
@@ -85,7 +87,7 @@ def receiver_main(user, serial_number, fname):
     p = pyaudio.PyAudio()
     t_rec = threading.Thread(target=aprs.record_audio, args=(Qin, cQin, p, fs, t.dusb_in))
     t_rec.start()
-    time.slep(2)
+    time.sleep(2)
     while(1):
         tmp = Qin.get()
         packets = t.tnc.processBuffer(tmp)
@@ -103,7 +105,10 @@ def receiver_main(user, serial_number, fname):
                 print("write")
         if state == 2 :
             break
+
+    time.sleep(75)
     cQin.put("EOT")
+    p.terminate()
     f1.close()
 
 def main():
@@ -136,7 +141,7 @@ def main():
         # transmit packets
         #t.transmit_packet(packet)
 
-        #r = receiver.Receiver(user, serial_number)
+        r = receiver.Receiver(user, serial_number, file_path)
 
         #im = JPEG.JPEG_decompression(data, jpeg_quality, image.shape[0], image.shape[1])
     #    if VIEW:

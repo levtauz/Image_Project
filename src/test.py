@@ -44,16 +44,16 @@ def test_image(user, serial_number):
     print("Putting packets in Queue")
 
     npp = 0
-    tmp = modem.tnc.modulatPacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
+    tmp = modem.tnc.modulatePacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
     Qout.put(tmp)
     while(1):
 	bytes = f.read(256)
-	tmp = modem.tnc.modulatPacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
+	tmp = modem.tnc.modulatePacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
 	Qout.put(tmp)
 	npp = npp+1
 	if len(bytes) < 256:
             break
-    tmp = modem.tnc.modulatPacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
+    tmp = modem.tnc.modulatePacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
     Qout.put(tmp)
     Qout.put("EOT")
 

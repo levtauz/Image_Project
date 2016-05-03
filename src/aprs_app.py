@@ -402,7 +402,7 @@ class aprs_tk(Tkinter.Tk):
 
 
 	# create afsk1200 signal
-	msg = self.modem.modulatPacket(callsign[:7], Digi, dest[:6], info,  preflags=100, postflags=100  )
+	msg = self.modem.modulatePacket(callsign[:7], Digi, dest[:6], info,  preflags=100, postflags=100  )
 	
 	# send keyon, message and keyoff to the radio -- and clear box
 	self.aoutQ.put("KEYON")
@@ -444,7 +444,7 @@ class aprs_tk(Tkinter.Tk):
 		# use the AX25 package to construct the bits
 		
 
-		msg = self.modem.modulatPacket(callsign[:7], Digi, dest[:6], info, preflags = 100, postflags = 100 )
+		msg = self.modem.modulatePacket(callsign[:7], Digi, dest[:6], info, preflags = 100, postflags = 100 )
 		# send keyon, message and keyoff to the radio -- and clear box
 		self.aoutQ.put("KEYON")
 		self.aoutQ.put(msg*0.2)

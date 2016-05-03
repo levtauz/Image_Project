@@ -44,11 +44,8 @@ from fractions import gcd
 #import mfsk
 
 
-
-
 def lcm(numbers):
     return reduce(lambda x, y: (x*y)/gcd(x,y), numbers, 1)
-
 
 def play_audio( Q,ctrlQ ,p, fs , dev, ser="", keydelay=0.3):
     # play_audio plays audio with sampling rate = fs
@@ -148,7 +145,7 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
 
 class TNCaprs:
 
-    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=2400):
+    def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=1200):
 
         #  Implementation of an afsk1200 TNC.
         #
@@ -167,7 +164,7 @@ class TNCaprs:
         ## compute sizes based on inputs
         self.baud = baud
         self.mark_f = 1200
-        self.space_f = 2400
+        self.space_f = 2200
         self.TBW = 2.0   # TBW for the demod filters
         self.N = (int(fs/baud*self.TBW)//2)*2+1   # length of the filters for demod
         self.fs = fs     # sampling rate
@@ -262,7 +259,7 @@ class TNCaprs:
         sig = np.cos(phase)
         return sig[::fs_lcm/self.fs]
 
-    def modulatPacket(self, callsign, digi, dest, info, preflags=80, postflags=80 ):
+    def modulatePacket(self, callsign, digi, dest, info, preflags=80, postflags=80 ):
 
         # given callsign, digipath, dest, info, number of pre-flags and post-flags the function contructs
         # an appropriate aprs packet, then converts them to NRZI and calls `modulate` to afsk 1200 modulate the packet.
