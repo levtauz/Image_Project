@@ -41,7 +41,7 @@ import bitarray
 from numpy import int32
 from fractions import gcd
 
-import mfsk
+#import mfsk
 
 
 
@@ -107,8 +107,8 @@ def play_audio( Q,ctrlQ ,p, fs , dev, ser="", keydelay=0.3):
         else:
             try:
                 ostream.write( data.astype(np.float32).tostring() )
-            except:
-                print("Exception")
+            except Exception as e:
+                print("{} {}".format(e.errno, e.strerror))
                 break
 
 def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
