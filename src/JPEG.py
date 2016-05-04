@@ -141,8 +141,6 @@ def zigzag_decode(vec, height, width, channels=3):
 			counter += 1
 	return img
 
-
-
 #Decompression
 
 def idct_2d(X):
