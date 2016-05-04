@@ -17,13 +17,27 @@ import pdb
 import matplotlib.pyplot as plt
 
 #Compression
-def zeropad_image(V):
+def zero_pad_image(V):
     def roundup(x):
         return int(math.ceil(x * 1.0 / 8)) * 8
     rows, cols = roundup(V.shape[0]), roundup(V.shape[1])
     zeros = np.zeros((rows, cols, 3), dtype='uint8')
     zeros[:V.shape[0], :V.shape[1], :] = V
     return zeros
+
+def reflect_pad_image(V):
+    def roundup(x):
+        return int(math.ceil(x * 1.0 / 8)) * 8
+    rows, cols = roundup(V.shape[0]) - V.shape[0], roundup(V.shape[1]) - V.shape[1]
+    shape = ((0,rows), (0,cols), (0,0))
+    return np.pad(V,shape,mode = "reflect")
+
+def constant_pad_image(V):
+    def roundup(x):
+        return int(math.ceil(x * 1.0 / 8)) * 8
+    rows, cols = roundup(V.shape[0]) - V.shape[0], roundup(V.shape[1]) - V.shape[1]
+    shape = ((0,rows), (0,cols), (0,0))
+    return np.pad(V,shape,mode = "edge")
 
 def block_image(V):
     l = []
@@ -62,7 +76,7 @@ def zigzag(img):
     """
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2])
     indexorder = sorted(((y, x) for y in xrange(img.shape[0]) for x in xrange(img.shape[1])), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+        key = lambda y,x: (y+x, -x if (y+x) % 2 else x) )
     #print indexorder
     for i, idx in enumerate(indexorder):
         y, x = idx
@@ -78,7 +92,7 @@ def zigzag_blocks(img):
     nz = img.shape[3]
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2] * img.shape[3])
     indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+        key = lambda y,x: (y+x, -x if (y+x) % 2 else x) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
@@ -97,7 +111,7 @@ def zigzag_full(img):
     nz = img.shape[2]
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2])
     indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+        key = lambda y,x: (y+x, -x if (y+x) % 2 else x) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
@@ -118,7 +132,7 @@ def zigzag_decode(vec, height, width, channels=3):
     num_blocks = r_height * r_width / 64
     img = np.empty((num_blocks,8,8,channels))
     indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+        key = lambda y,x: (y+x, -x if (y+x) % 2 else x) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
@@ -143,7 +157,7 @@ def JPEG_compression(image, quality = 50):
     [number of blocks, 8,8,3]
     """
     #Prepocessing
-    im = zeropad_image(image)
+    im = reflect_pad_image(image)
     im = rgb2lab(im)
     im[:,:,[1,2]] += 128
     #Blocked into 8x8 blocks and apply DCT
@@ -212,5 +226,6 @@ def main():
    
     im = JPEG_decompression(data,quality,image.shape[0],image.shape[1])
     print("PSNR = {0}".format(utils.psnr(image,im)))
+
 if __name__ == "__main__":
     main()

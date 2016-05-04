@@ -1,7 +1,13 @@
 import numpy as np
 import scipy as scp
+from scipy import misc
 import math
 import numpy as np
+from matplotlib import *
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import *
+
+from numpy import *
 
 import pyaudio
 import serial
@@ -17,7 +23,7 @@ from bitarray import bitarray
 
 import pdb
 
-
+DEBUG=True
 
 def psnr(im_truth, im_test, maxval=255.):
     """
@@ -26,6 +32,11 @@ def psnr(im_truth, im_test, maxval=255.):
     mse = np.linalg.norm(im_truth.astype(np.float64) - im_test.astype(np.float64))**2 / np.prod(np.shape(im_truth))
     return 10 * np.log10(maxval ** 2 / mse)
 
+def downsample(im, factor):
+    return misc.imresize(im, (im.shape[0]/factor, im.shape[1]/factor))
+
+def upsample(im, orig_size):
+    return misc.imresize(im, orig_size)
 
 def text2Morse(text, fc, fs, dt):
     CODE = {'A': '.-',     'B': '-...',   'C': '-.-.',
@@ -77,7 +88,7 @@ def printDevNumbers(output):
         N = p.get_device_count()
         for n in range(0,N):
             name = p.get_device_info_by_index(n).get('name')
-            print n, name
+            print_msg( "{} {}".format(n, name), DEBUG)
         p.terminate()
 
 def get_dev_numbers(person, output=False):
@@ -97,6 +108,11 @@ def get_dev_numbers(person, output=False):
         dusb_out = 5
         din = 2
         dout = 4
+    elif person == "lab": # for lab computers
+        dusb_in = 1
+        dusb_out = 3
+        din = 0
+        dout = 2
     return (dusb_in, dusb_out, din, dout)
 
 def setup_serial(com_num):
@@ -109,7 +125,7 @@ def setup_serial(com_num):
             s = serial.Serial(port='COM4')
     else:
         if sys.platform == 'linux2':
-            s = serial.Serial(port='/dev/ttyUSB{0}'.format(com_num))
+            s = serial.Serial(port='/dev/ttyUSB{0}').format(com_num)
         else:
             s = serial.Serial(port='COM{}'.format(com_num))
     s.setDTR(0)
@@ -183,13 +199,23 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
         f_range = [ fc, fs / 2.0 + fc]
         xmf = np.fft.fft(xmw,len(xmw),axis=0)
         sg_plot(t_range, f_range, xmf[0:m/2,:],dbf=dbf)
-        print 1
+        print_msg(1, DEBUG)
     else:
         f_range = [-fs / 2.0 + fc, fs / 2.0 + fc]
         xmf = np.fft.fftshift( np.fft.fft( xmw ,len(xmw),axis=0), axes=0 )
         sg_plot(t_range, f_range, xmf,dbf = dbf)
 
     return t_range, f_range, xmf
+
+def print_msg(msg, debug=True):
+    if debug:
+        print(msg)
+
+def decode_packets(packets):
+    npack = 0
+    for pkt in packets:
+        npack += 1
+        print (str(npack) + ") |DEST:" + pkt.destination[:-1].decode('ascii') + " |SRC:" + pkt.source + " |DIGI:" + pkt.digipeaters.decode('ascii') + " |", pkt.info, "|")
 
 
 #####
@@ -204,6 +230,15 @@ def file_to_bitarray(fname):
     with open(fname, 'rb') as f:
         ba.fromfile(f)
     return ba
+
+def gzip_to_data(fname):
+	"""
+	assume file is int16 data
+	"""
+	with gzip.open(fname, 'rb') as f:
+		data = f.read()
+	return np.fromstring(data,dtype = int16)
+
 
 def data_to_bitarray(data):
     """
@@ -232,5 +267,3 @@ def get_file_size(fname):
     Returns the file size in Bytes
     """
     return os.path.getsize(fname)
-
-
