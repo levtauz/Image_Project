@@ -75,8 +75,8 @@ def zigzag(img):
     traverse in zig-zag order.
     """
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2])
-    indexorder = sorted(((y, x) for y in xrange(img.shape[0]) for x in xrange(img.shape[1])), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+    indexorder = sorted(((y, x) for y in range(img.shape[0]) for x in range(img.shape[1])), \
+        key = lambda x: (x[0]+x[1], -x[1] if (x[0]+x[1]) % 2 else x[1]) )
     #print indexorder
     for i, idx in enumerate(indexorder):
         y, x = idx
@@ -91,12 +91,12 @@ def zigzag_blocks(img):
     num_blocks = img.shape[0]
     nz = img.shape[3]
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2] * img.shape[3])
-    indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+    indexorder = sorted(((y, x) for y in range(8) for x in range(8)), \
+        key = lambda x: (x[0]+x[1], -x[1] if (x[0]+x[1]) % 2 else x[1]) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
-        for j in xrange(img.shape[0]):
+        for j in range(img.shape[0]):
             vector[3*counter:3*counter+3] = img[j, y, x, :]
             counter += 1
     return vector
@@ -110,13 +110,13 @@ def zigzag_full(img):
     nx = img.shape[1] / 8
     nz = img.shape[2]
     vector = np.empty(img.shape[0] * img.shape[1] * img.shape[2])
-    indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+    indexorder = sorted(((y, x) for y in range(8) for x in range(8)), \
+        key = lambda x: (x[0]+x[1], -x[1] if (x[0]+x[1]) % 2 else x[1]) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
-        for y_i in xrange(ny):
-            for x_i in xrange(nx):
+        for y_i in range(ny):
+            for x_i in range(nx):
                 new_y = 8 * y_i + y
                 new_x = 8 * x_i + x
                 vector[nz*counter:nz*counter+nz] = img[new_y, new_x, :]
@@ -131,12 +131,12 @@ def zigzag_decode(vec, height, width, channels=3):
     nx = r_width/8
     num_blocks = r_height * r_width / 64
     img = np.empty((num_blocks,8,8,channels))
-    indexorder = sorted(((y, x) for y in xrange(8) for x in xrange(8)), \
-        key = lambda (y,x): (y+x, -x if (y+x) % 2 else x) )
+    indexorder = sorted(((y, x) for y in range(8) for x in range(8)), \
+        key = lambda x: (x[0]+x[1], -x[1] if (x[0]+x[1]) % 2 else x[1]) )
     counter = 0
     for i, idx in enumerate(indexorder):
         y, x = idx
-        for j in xrange(img.shape[0]):
+        for j in range(img.shape[0]):
             img[j, y, x, :] = vec[3*counter:3*counter+3]
             counter += 1
     return img

@@ -1,7 +1,6 @@
 # own file packages
 import aprs
 import JPEG
-import ax25
 import utils
 import test
 
@@ -11,12 +10,20 @@ import receiver
 from scipy import misc
 import matplotlib.pyplot as plt
 import pyaudio
-import sys
 import threading, time
-import Queue
 import numpy as np
 import serial
 import bitarray
+import scipy
+
+import sys
+if sys.version_info.major == 2:
+    import Queue
+    import ax25
+else:
+    import queue as Queue
+    import ax25_3 as ax25
+
 
 # debugging
 import pdb
@@ -26,10 +33,15 @@ import argparse
 
 # Global variables
 VIEW=False # toggle comparing old and new images
+DEBUG=True
+
+fs = 48000
+callsign = "KM6BHD"
 
 def init_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--user", default=str) # for user setup configuration
+    parser.add_argument("--type", default=str) # receiver or transmitter
     parser.add_argument("-f", default="images/createrLake.tiff") # image file
     parser.add_argument("-q", default=90, type=int) # image quality
     parser.add_argument("-s", default=-1, type=int) # serial number. default is -1 for MAC or COM4. can change if needed
@@ -37,100 +49,21 @@ def init_args():
     args = parser.parse_args()
     return args
 
-def transmitter_main(user, serial_number, fname):
-    callsign = "KM6BHD"
-    fs = 48000
-    t = transmitter.Transmitter(user, serial_number)
-    Qout = Queue.Queue()
-    cQout = Queue.Queue()
-    p = pyaudio.PyAudio()
-    t_play = threading.Thread(target = aprs.play_audio, args = (Qout, cQout, p, fs, t.dusb_out, t.s))
+def transmitter_main(user, serial_number, file_path):
+    t = transmitter.Transmitter(user, serial_number, baud=1800, space_f=2400)
+    t.transmit_file(file_path, callsign)
 
-    f = open(fname, 'rb')
+def receiver_main(user, serial_number, file_path):
+    r = receiver.Receiver(user, serial_number, baud=1200, mark_f=1200, space_f=2400)
+    r.record(file_path)
 
-    print "Putting packets in Queue"
-
-    npp = 0
-
-    Qout.put("KEYON")
-    tmp = t.tnc.modulatPacket(callsign, "", "BEGIN", fname , preflags=2, postflags=2 )
-    Qout.put(tmp)
-    while(1):
-	bytes = f.read(256)
-	tmp = t.tnc.modulatPacket(callsign, "", str(npp), bytes, preflags=4, postflags=2 )
-	Qout.put(tmp)
-	npp = npp+1
-        if npp > 5:
-            break
-	if len(bytes) < 256:
-            break
-    tmp = t.tnc.modulatPacket(callsign, "", "END", "This is the end of transmission", preflags=2, postflags=2 )
-    Qout.put(tmp)
-    Qout.put("KEYOFF")
-    Qout.put("EOT")
-
-    print "Done generating packets. Generated {} packets".format(npp)
-    #aprs.play_audio(Qout, cQout, p, fs, t.dusb_out, t.s, keydelay=0.5)
-    t_play.start()
-    time.sleep(75)
-    cQout.put("EOT")
-    time.sleep(1)
-    p.terminate()
-    f.close()
-
-def receiver_main(user, serial_number, fname):
-    fs = 48000
-    cQin = Queue.Queue()
-    Qin = Queue.Queue()
-    p = pyaudio.PyAudio()
-
-    t = transmitter.Transmitter(user, serial_number)
-    
-    fs_usb = p.get_device_info_by_index(t.dusb_in)['defaultSampleRate']
-    print(fs_usb)
-    t_rec = threading.Thread(target=aprs.record_audio, args=(Qin, cQin, p, fs_usb, t.dusb_in, 1024))
-    t_rec.start()
-    
-    #aprs.record_audio(Qin, cQin, p, fs, t.dusb_in)
-    cQout = Queue.Queue()
-    Qout = Queue.Queue()
-
-    t_play = threading.Thread(target = aprs.play_audio,   args = (Qout,cQout,  p, fs_usb, t.dout,1024))
-
-    # start the recording and playing threads
-    t_play.start()
-
-    # give some time before starting
-    time.sleep(1)
-
-    n = 0
-    state = 0
-    while(1):
-        tmp = Qin.get()
-        Qout.put(tmp)
-        packets = t.tnc.processBuffer(tmp)
-        n += 1
-        #if(n % 10 == 0):
-            #print("processing ", n)
-        #    pdb.set_trace()
-        for ax in packets:
-            npack = npack+1
-            print ((str(npack) +")", str(ax)))
-            if state == 0 and ax.destination[:5]=="BEGIN":
-                f1 = open(fname,"wb")
-                state = 1
-            elif state == 1 and ax.destination[:3] == "END":
-                state = 2
-                f1.close()
-                break
-            elif state == 1:
-                f1.write(ax.info)
-                print("write")
-        if state == 2 :
-            break
-    cQin.put("EOT")
-    cQout.put('EOT')
-   
+def decompress(file_path, q, h, w):
+    print ("Decompressing")
+    data = utils.gzip_to_data(file_path+".gz") 
+    im = JPEG.JPEG_decompression(data, q, h, w)
+    scipy.misc.imsave(file_path+"_dc.tiff", im)
+    #with open(file_path+"dc","w") as f:
+    #    f.write(im)
 
 def main():
     args = init_args()
@@ -143,12 +76,23 @@ def main():
     jpeg_quality = args.q
 
     test_number = args.test
+
+    type = args.type
+
     if test_number != -1:
         test.run_tests(user, serial_number)
     else:
+        if args.type == "r": # receiver
+            utils.print_msg("Receiver!", DEBUG)
+            receiver_main(user, serial_number, file_path)
+        if args.type == "t": # transmitter
+            utils.print_msg("Transmitter!", DEBUG)
+            transmitter_main(user, serial_number, file_path)
+
+
         #test.test_image(user, serial_number)
         #transmitter_main(user, serial_number, file_path)
-        receiver_main(user, serial_number, file_path)
+        #receiver_main(user, serial_number, file_path)
 
         # read in image
         #image = misc.imread(file_path)
