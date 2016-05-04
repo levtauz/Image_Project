@@ -49,7 +49,7 @@ def init_args():
     return args
 
 def transmitter_main(user, serial_number, file_path):
-    t = transmitter.Transmitter(user, serial_number, baud=1200, space_f=2200)
+    t = transmitter.Transmitter(user, serial_number, baud=2400, space_f=2400)
     t.transmit_file(file_path, callsign)
 
 def receiver_main(user, serial_number, file_path):

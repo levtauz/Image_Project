@@ -56,7 +56,7 @@ class Transmitter():
         Qout.put("KEYOFF")
         Qout.put("EOT")
 
-        utils.print_msg("Done generating packets. Generated {} packets".format(Qout.qsize()), DEBUG)
+        utils.print_msg("Done generating packets. Generated {} packets".format(Qout.qsize()-3), DEBUG)
         return Qout
 
     def transmit_file(self, file_path, callsign="KM6BHD"):
