@@ -53,7 +53,7 @@ def transmitter_main(user, serial_number, file_path):
     t.transmit_file(file_path, callsign)
 
 def receiver_main(user, serial_number, file_path):
-    r = receiver.Receiver(user, serial_number)
+    r = receiver.Receiver(user, serial_number, baud=2400, space_f=2400)
     r.record(file_path)
 
 def main():

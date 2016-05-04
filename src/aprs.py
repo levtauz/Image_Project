@@ -401,10 +401,10 @@ class TNCaprs:
 
         if foundPacket == False:
             return ax
-
         bytes = bitsu.tobytes()
         ax.destination = ax.callsign_decode(bitsu[:56])
         source = ax.callsign_decode(bitsu[56:112])
+        source = str(source)
         if source[-1].isdigit() and source[-1]!="0":
             ax.source = b"".join((source[:-1],'-',source[-1]))
         else:
@@ -416,7 +416,7 @@ class TNCaprs:
             digilen = 0
         else:
             for n in range(14,len(bytes)-1):
-                if ord(bytes[n]) & 1:
+                if bytes[n] & 1:
                     digilen = (n-14)+1
                     break
 
