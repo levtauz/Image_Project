@@ -83,7 +83,6 @@ def main():
 
         #test.test_image(user, serial_number)
         #transmitter_main(user, serial_number, file_path)
-        #receiver_main(user, serial_number, file_path)
 
         # read in image
         #image = misc.imread(file_path)

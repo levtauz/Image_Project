@@ -153,7 +153,6 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
         data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
         queue.put( data_flt ) # append to list
 
-
 class TNCaprs:
 
     def __init__(self, fs = 48000.0, Abuffer = 1024, Nchunks=43, baud=2400, mark_f=1200, space_f=2400):
