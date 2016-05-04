@@ -11,6 +11,7 @@ import gzip
 
 import sys
 import os
+import argparse
 
 #Debug
 import pdb
@@ -175,7 +176,7 @@ def unquantize(X,q):
 
 	return X
 
-def JPEG_compression(image, quality = 50,downsample = 1):
+def JPEG_compression(image, quality = 50,percent= 1):
 	"""
 
 	Takes in an RGB image and applys the JPEG compression algorithm
@@ -194,7 +195,7 @@ def JPEG_compression(image, quality = 50,downsample = 1):
 	#Prepocessing
 
 	#DownSampling
-	im_d = utils.downsample(image, downsample)
+	im_d = utils.downsample(image, percent)
 
 	#Pading to make 8x8 blocks
 	im_pad = reflect_pad_image(im_d)
@@ -246,22 +247,66 @@ def JPEG_decompression(data, channels=3):
 
 	return im.astype(np.uint8)
 
+def search(fname,percent):
+    lim = 8500
+    size = float('inf')
+    image = misc.imread(fname)
+    
+    ps = range(percent,1,-1)
+    print(ps)
+    qs = range(99,1,-1)
+    p_f = 0
+    q_f = 0
+    for p in ps:
+        for q in qs:
+            data = JPEG_compression(image,q,p)
+            utils.save_to_gzip(data,fname)
+            size = utils.get_file_size(fname + ".gz")
+            print(size)
+            if(size < lim):
+                q_f = q           
+                break
+        print(p)
+        if(size < lim):
+            p_f = p
+            break
+    
+    print(q_f,p_f)
+
+def main2():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", default="images/createrLake.tiff") # image file
+    parser.add_argument("-q", default=90, type=int) # image quality
+    parser.add_argument("-p", default=100, type=int) # Percent of Downsampling
+    parser.add_argument("--plot", default=0, type=bool) # test suites
+    args = parser.parse_args()
+    fname = args.f
+    percent = args.p
+    search(fname,percent)
+    
 def main():
-	assert len(sys.argv) == 4, "Need the filename of image to compress and quality amount"
-	fname = sys.argv[1]
-	quality = int(sys.argv[2])
-	downsample = int(sys.argv[3])
-	image = misc.imread(fname)
-	data = JPEG_compression(image,quality,downsample)
-	utils.save_to_gzip(data,fname)
-	print("Original File Size = {0} B".format(utils.get_file_size(fname)))
-	print("New File Size = {0} B".format(utils.get_file_size(fname + ".gz")))
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-f", default="images/createrLake.tiff") # image file
+    parser.add_argument("-q", default=90, type=int) # image quality
+    parser.add_argument("-p", default=100, type=int) # Percent of Downsampling
+    parser.add_argument("--plot", default=0, type=bool) # test suites
+    args = parser.parse_args()
 
-	#Load File
-	data2 = utils.gzip_to_data(fname + ".gz")
+    fname = args.f
+    quality = args.q
+    percent = args.p
+    image = misc.imread(fname)
+    data = JPEG_compression(image,quality,percent)
+    utils.save_to_gzip(data,fname)
+    print("Original File Size = {0} B".format(utils.get_file_size(fname)))
+    print("New File Size = {0} B".format(utils.get_file_size(fname + ".gz")))
 
-	im2 = JPEG_decompression(data2)
-	print("PSNR = {0}".format(utils.psnr(image,im2)))
+    #Load File
+    data2 = utils.gzip_to_data(fname + ".gz")
+
+    im2 = JPEG_decompression(data2)
+    print("PSNR = {0}".format(utils.psnr(image,im2)))
+    if(args.plot):
         plt.figure()
         plt.subplot(1,2,1)
         plt.imshow(image)
@@ -271,4 +316,4 @@ def main():
         plt.show()
 
 if __name__ == "__main__":
-	main()
+    main()

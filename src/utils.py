@@ -32,8 +32,11 @@ def psnr(im_truth, im_test, maxval=255.):
     mse = np.linalg.norm(im_truth.astype(np.float64) - im_test.astype(np.float64))**2 / np.prod(np.shape(im_truth))
     return 10 * np.log10(maxval ** 2 / mse)
 
-def downsample(im, factor):
-    return misc.imresize(im, (int(im.shape[0]/factor), int(im.shape[1]/factor)))
+def downsample(im, percent):
+    """
+    percent: percent of image 
+    """
+    return misc.imresize(im, percent)
 
 def upsample(im, orig_size):
     return misc.imresize(im, orig_size)
