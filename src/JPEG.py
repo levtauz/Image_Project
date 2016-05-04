@@ -47,7 +47,7 @@ def block_image(V):
     return np.array(l)
 
 def dct_2d(X):
-    return dct(dct(X, axis=1, norm="ortho"), axis=2, norm="ortho")
+    return dct(dct(X, axis=1), axis=2)
 
 def dct_all(X):
     blocks = block_image(X)
@@ -171,7 +171,7 @@ def JPEG_compression(image, quality = 50):
 #Decompression
 
 def idct_2d(X):
-    return idct(idct(X, axis=1,norm="ortho"), axis=2,norm="ortho")
+    return idct(idct(X, axis=1), axis=2) * 1.0/256
 
 def unblock_image(X,height, width):
     def roundup(x):
