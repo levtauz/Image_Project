@@ -33,7 +33,7 @@ def psnr(im_truth, im_test, maxval=255.):
     return 10 * np.log10(maxval ** 2 / mse)
 
 def downsample(im, factor):
-    return misc.imresize(im, (im.shape[0]/factor, im.shape[1]/factor))
+    return misc.imresize(im, (int(im.shape[0]/factor), int(im.shape[1]/factor)))
 
 def upsample(im, orig_size):
     return misc.imresize(im, orig_size)
@@ -237,7 +237,7 @@ def gzip_to_data(fname):
 	"""
 	with gzip.open(fname, 'rb') as f:
 		data = f.read()
-	return np.fromstring(data,dtype = int16)
+	return np.fromstring(data,dtype = np.int32)
 
 
 def data_to_bitarray(data):
@@ -252,7 +252,7 @@ def bitarray_to_data(bits):
     """
     assume bits contain int16 data
     """
-    return np.fromstring(bits,dtype = np.int16)
+    return np.fromstring(bits,dtype = np.int32)
 
 def save_to_gzip(data,fname):
     """

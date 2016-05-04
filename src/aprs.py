@@ -153,6 +153,25 @@ def record_audio( queue,ctrlQ, p, fs ,dev,chunk=1024):
         data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
         queue.put( data_flt ) # append to list
 
+    istream = p.open(format=pyaudio.paFloat32, channels=1, rate=int(fs),input=True,input_device_index=dev,frames_per_buffer=chunk)
+
+    # record audio in chunks and append to frames
+    frames = [];
+    while (1):
+        if not ctrlQ.empty():
+            ctrlmd = ctrlQ.get()
+            if ctrlmd is "EOT"  :
+                istream.stop_stream()
+                istream.close()
+                print("Closed  record thread")
+                return;
+        try:  # when the pyaudio object is distroyed stops
+            data_str = istream.read(chunk, exception_on_overflow=False) # read a chunk of data
+        except Exception as e:
+            print("{} {}".format(e.errno, e.strerror))
+            break
+        data_flt = np.fromstring( data_str, 'float32' ) # convert string to float
+        queue.put( data_flt ) # append to list
 
 class TNCaprs:
 

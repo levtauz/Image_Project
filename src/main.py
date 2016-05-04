@@ -25,6 +25,15 @@ else:
     import ax25_3 as ax25
 
 
+import sys
+if sys.version_info.major == 2:
+    import Queue
+    import ax25
+else:
+    import queue as Queue
+    import ax25_3 as ax25
+
+
 # debugging
 import pdb
 
@@ -62,8 +71,6 @@ def decompress(file_path, q, h, w):
     data = utils.gzip_to_data(file_path+".gz") 
     im = JPEG.JPEG_decompression(data, q, h, w)
     scipy.misc.imsave(file_path+"_dc.tiff", im)
-    #with open(file_path+"dc","w") as f:
-    #    f.write(im)
 
 def main():
     args = init_args()
