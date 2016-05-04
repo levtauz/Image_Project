@@ -82,17 +82,6 @@ class Receiver():
         time.sleep(3)
         p.terminate()
         return samples
-        # get recorded audio from queue
-        #sig = []
-        #for n in xrange(0, Q.qsize()):
-            #samples = Qin.get()
-            #sig.extend(samples)
-        ## clear queue
-        #with Q.mutex:
-            #Q.queue.clear()
-
-        #p.terminate()
-        #return sig
 
     def parse_data(self, data):
         NRZIa = self.tnc.demod(data)

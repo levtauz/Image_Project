@@ -53,25 +53,27 @@ def init_args():
     parser.add_argument("--type", default=str) # receiver or transmitter
     parser.add_argument("-f", default="images/createrLake.tiff") # image file
     parser.add_argument("-q", default=90, type=int) # image quality
+    parser.add_argument("-d", type=int) # downsample
     parser.add_argument("-s", default=-1, type=int) # serial number. default is -1 for MAC or COM4. can change if needed
     parser.add_argument("--test", default=-1, type=int) # test suites
     args = parser.parse_args()
     return args
 
-def transmitter_main(user, serial_number, file_path):
+def transmitter_main(user, serial_number, file_path, jpeg_quality, downsample):
+    jpeg_quality = int(jpeg_quality)
+    downsample = int(downsample)
+    image = misc.imread(file_path)
+    data = JPEG.JPEG_compression(image, jpeg_quality, downsample)
+    utils.save_to_gzip(data, file_path)
     t = transmitter.Transmitter(user, serial_number, baud=1200, space_f=2200)
-
-    t.transmit_file(file_path, callsign)
+    t.transmit_file(file_path + ".gz", callsign)
 
 def receiver_main(user, serial_number, file_path):
-    r = receiver.Receiver(user, serial_number, baud=1200, mark_f=1200, space_f=2400)
+    r = receiver.Receiver(user, serial_number, baud=1200, mark_f=1200, space_f=2200)
     r.record(file_path)
-
-def decompress(file_path, q, h, w):
-    print ("Decompressing")
-    data = utils.gzip_to_data(file_path+".gz")
-    im = JPEG.JPEG_decompression(data, q, h, w)
-    scipy.misc.imsave(file_path+"_dc.tiff", im)
+    data = utils.gzip_to_data(file_path + ".gz")
+    im = JPEG.JPEG_decompression(data)
+    misc.imsave(file_path + "_dc.tiff", im)
 
 def main():
     args = init_args()
@@ -82,6 +84,7 @@ def main():
 
     file_path = args.f
     jpeg_quality = args.q
+    downsample = args.d
 
     test_number = args.test
 
@@ -95,7 +98,7 @@ def main():
             receiver_main(user, serial_number, file_path)
         if args.type == "t": # transmitter
             utils.print_msg("Transmitter!", DEBUG)
-            transmitter_main(user, serial_number, file_path)
+            transmitter_main(user, serial_number, file_path, jpeg_quality, downsample)
 
 
         #test.test_image(user, serial_number)
