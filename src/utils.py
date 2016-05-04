@@ -3,6 +3,11 @@ import scipy as scp
 from scipy import misc
 import math
 import numpy as np
+from matplotlib import *
+import matplotlib.pyplot as plt
+from matplotlib.pyplot import *
+
+from numpy import *
 
 import pyaudio
 import serial
@@ -205,6 +210,12 @@ def myspectrogram_hann_ovlp(x, m, fs, fc,dbf = 60):
 def print_msg(msg, debug=True):
     if debug:
         print(msg)
+
+def decode_packets(packets):
+    npack = 0
+    for pkt in packets:
+        npack += 1
+        print (str(npack) + ") |DEST:" + pkt.destination[:-1].decode('ascii') + " |SRC:" + pkt.source + " |DIGI:" + pkt.digipeaters.decode('ascii') + " |", pkt.info, "|")
 
 
 #####

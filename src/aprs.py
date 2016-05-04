@@ -49,6 +49,10 @@ from fractions import gcd
 
 #import mfsk
 
+import utils
+import receiver
+
+DEBUG = True
 
 def lcm(numbers):
     return reduce(lambda x, y: (x*y)/gcd(x,y), numbers, 1)
@@ -198,7 +202,7 @@ class TNCaprs:
         self.dpll = np.round(2.0**32 / self.Ns).astype(int32)    # PLL step
         self.pll =  0                # PLL counter
         self.ppll = -self.dpll       # PLL counter previous value -- to detect overflow
-        self.plla = 0.74             # PLL agressivness (small more agressive)
+        self.plla = 0.3             # PLL agressivness (small more agressive)
 
 
         ## state variable to NRZI2NRZ
@@ -420,6 +424,8 @@ class TNCaprs:
                     digilen = (n-14)+1
                     break
 
+        utils.print_msg("Digilen = " + str(digilen), DEBUG)
+
         #    if digilen > 56:
         #        return ax
         ax.digipeaters =  ax.callsign_decode(bitsu[112:112+digilen*8])
@@ -473,9 +479,11 @@ class TNCaprs:
             # store end of bit buffer to next buffer
             self.oldbits = bits[-7:].copy()
 
+
             # look for packets
             packets = self.findPackets(bits)
 
+            utils.print_msg("Found " + str(len(packets)) + " packets", DEBUG)
             # Copy end of sample buffer to the beginning of the next (overlapp and save)
             self.buff[:NN] = self.buff[-NN:].copy()
 
@@ -486,6 +494,8 @@ class TNCaprs:
             for n in range(0,len(packets)):
                 if len(packets[n]) > 200:
                     ax = self.decodeAX25(packets[n])
+                    #print (" |DEST:" + ax.destination[:-1].decode('ascii') + " |SRC:" + " |DIGI:" + " |", ax.info, "|")
+
                     if ax.info != 'bad packet':
                         validPackets.append(ax)
 

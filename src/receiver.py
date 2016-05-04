@@ -32,8 +32,11 @@ class Receiver():
         npack = 0
         state = 0
         n = 0
+        samples = []
+        start = time.time()
         while(1):
             tmp = Q.get()
+            samples.append(tmp)
             #utils.print_msg(n, DEBUG)
             packets = self.tnc.processBuffer(tmp)
             self.decode_packets(packets)
@@ -58,7 +61,10 @@ class Receiver():
             if state == 2 :
                 break
             n+=1
+            #if (time.time() - start > 35):
+                #break
         print("Elapsed Time : " + str(time.time() - start))
+        return samples
 
     def record(self, file_path, dev_num=-1):
         Q = Queue.Queue()
@@ -71,13 +77,17 @@ class Receiver():
         time.sleep(2)
         utils.print_msg("Processing packets", DEBUG)
 
-        self.process_packets(Q, file_path)
+        samples = self.process_packets(Q, file_path)
 
-        time.sleep(75)
+        utils.print_msg("TEST", DEBUG)
+        time.sleep(3)
+        utils.print_msg("TEST1", DEBUG)
         cQ.put("EOT")
+        time.sleep(3)
+        utils.print_msg("TEST2", DEBUG)
         p.terminate()
-        f1.close()
-
+        utils.print_msg("TEST3", DEBUG)
+        return samples
         # get recorded audio from queue
         #sig = []
         #for n in xrange(0, Q.qsize()):
