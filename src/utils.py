@@ -217,7 +217,7 @@ def gzip_to_data(fname):
 	"""
 	with gzip.open(fname, 'rb') as f:
 		data = f.read()
-	return np.fromstring(data,dtype = int16)
+	return np.fromstring(data,dtype = np.int32)
 
 
 def data_to_bitarray(data):
@@ -232,7 +232,7 @@ def bitarray_to_data(bits):
     """
     assume bits contain int16 data
     """
-    return np.fromstring(bits,dtype = np.int16)
+    return np.fromstring(bits,dtype = np.int32)
 
 def save_to_gzip(data,fname):
     """
@@ -240,7 +240,7 @@ def save_to_gzip(data,fname):
     fname: name of gzip file, do not at gz to the end
     """
     with gzip.open(fname  + '.gz', 'wb',compresslevel = 9) as f:
-        f.write(data)
+        f.write(data.tobytes())
 
 def get_file_size(fname):
     """
