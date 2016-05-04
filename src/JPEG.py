@@ -239,7 +239,7 @@ def JPEG_decompression(data, channels=3):
 	im[:,:,[1,2]] -= 128
 	im = lab2rgb(im) * 255 # lab2rgb converts to float64
 	#Undo Padding
-	im = im[:d_height,:d_width] 
+	im = im[:d_height,:d_width]
 
 	#Upsample
 	im = utils.upsample(im,(height,width))
@@ -252,7 +252,7 @@ def main():
 	quality = int(sys.argv[2])
 	downsample = int(sys.argv[3])
 	image = misc.imread(fname)
-	data = JPEG_compression(image,quality,downsample) 
+	data = JPEG_compression(image,quality,downsample)
 	utils.save_to_gzip(data,fname)
 	print("Original File Size = {0} B".format(utils.get_file_size(fname)))
 	print("New File Size = {0} B".format(utils.get_file_size(fname + ".gz")))
@@ -262,6 +262,13 @@ def main():
 
 	im2 = JPEG_decompression(data2)
 	print("PSNR = {0}".format(utils.psnr(image,im2)))
+        plt.figure()
+        plt.subplot(1,2,1)
+        plt.imshow(image)
+        plt.subplot(1,2,2)
+        plt.imshow(im2)
+
+        plt.show()
 
 if __name__ == "__main__":
 	main()

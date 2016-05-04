@@ -34,7 +34,7 @@ class Transmitter():
         npp = 0
         while(1):
             bytes = f.read(bytes_read)
-            tmp = self.tnc.modulatePacket(callsign, "", str(npp), bytes, preflags=10, postflags=10 )
+            tmp = self.tnc.modulatePacket(callsign, "", str(npp), bytes, preflags=5, postflags=5 )
             Qout.put(tmp)
             npp = npp+1
             if len(bytes) < bytes_read:
@@ -46,7 +46,7 @@ class Transmitter():
         utils.print_msg("Putting packets in Queue", DEBUG)
 
         Qout.put("KEYON")
-        tmp = self.tnc.modulatePacket(callsign, "", "BEGIN", file_path , preflags=40, postflags=2 )
+        tmp = self.tnc.modulatePacket(callsign, "", "BEGIN", file_path , preflags=20, postflags=2 )
         Qout.put(tmp)
 
         Qout = self.packets_to_queue(file_path, callsign, Qout, 256)
