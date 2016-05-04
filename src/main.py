@@ -59,7 +59,8 @@ def init_args():
     return args
 
 def transmitter_main(user, serial_number, file_path):
-    t = transmitter.Transmitter(user, serial_number, baud=1800, space_f=2400)
+    t = transmitter.Transmitter(user, serial_number, baud=1200, space_f=2200)
+
     t.transmit_file(file_path, callsign)
 
 def receiver_main(user, serial_number, file_path):
@@ -68,7 +69,7 @@ def receiver_main(user, serial_number, file_path):
 
 def decompress(file_path, q, h, w):
     print ("Decompressing")
-    data = utils.gzip_to_data(file_path+".gz") 
+    data = utils.gzip_to_data(file_path+".gz")
     im = JPEG.JPEG_decompression(data, q, h, w)
     scipy.misc.imsave(file_path+"_dc.tiff", im)
 

@@ -23,7 +23,7 @@ from bitarray import bitarray
 
 import pdb
 
-DEBUG=True
+DEBUG=False
 
 def psnr(im_truth, im_test, maxval=255.):
     """
